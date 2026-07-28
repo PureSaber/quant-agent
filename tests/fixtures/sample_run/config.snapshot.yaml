@@ -1,0 +1,8 @@
+data: {}
+factors:
+- pe_ratio
+- forecast_score
+- northbound_chg_5d
+filters:
+  pit_fundamentals: true
+  use_historical_universe: true

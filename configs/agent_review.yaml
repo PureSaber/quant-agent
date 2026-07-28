@@ -1,0 +1,30 @@
+# quant-agent review settings
+
+enable_llm: false
+model: gpt-4.1-mini
+temperature: 0.2
+
+thresholds:
+  min_ic_abs: 0.02
+  min_ic_positive_ratio: 0.52
+  min_sharpe: 0.0
+  max_drawdown_limit: -0.35
+  ic_decay_short_horizon: 1
+  ic_decay_long_horizon: 20
+  ic_decay_ratio_warn: 0.5
+  ic_delta_warn: 0.02
+  sharpe_delta_warn: 0.3
+
+rules:
+  flag_nan_factors: true
+  check_pit_config: true
+  check_alt_factors: true
+  check_backtest_stats: true
+  check_ic_decay: true
+  compare_with_previous: true
+
+output:
+  experiment_log_dir: experiment-log
+  write_manifest: true
+
+pitfalls_path: ../../quant-research-notes/pitfalls.md

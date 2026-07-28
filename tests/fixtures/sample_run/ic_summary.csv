@@ -1,0 +1,4 @@
+factor,mean_ic,ic_ir,ic_positive_ratio
+pe_ratio,0.04,0.5,0.55
+forecast_score,,,
+northbound_chg_5d,0.01,0.1,0.51
