@@ -6,8 +6,8 @@ LangGraph review layer for the PureSaber quant stack. It reads completed run out
 
 | Does | Does not |
 |------|----------|
-| Post-backtest review of IC / stats CSVs | Fetch market data |
-| Rule-based QA (NaN factors, weak IC, PIT flags) | Run backtests or replace `quant-data-kit` |
+| Post-backtest review of IC / stats / IC decay CSVs | Fetch market data |
+| Rule-based QA (NaN factors, weak IC, backtest stats, IC decay, run diff) | Run backtests or replace `quant-data-kit` |
 | Optional LLM explain + skeptic nodes | Embed inside multifactor |
 | Write markdown to `experiment-log/` | Require API keys in CI (`--offline`) |
 | Emit `review_manifest.json` for quant-lab scanning | |
