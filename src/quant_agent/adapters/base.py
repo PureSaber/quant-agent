@@ -46,15 +46,20 @@ def _read_yaml(path: Path) -> dict:
 PROJECT_ALIASES = {
     "multifactor": "a-share-multifactor",
     "a-share-multifactor": "a-share-multifactor",
+    "futures-spread": "quant-futures-spread",
+    "quant-futures-spread": "quant-futures-spread",
+    "future_spread": "quant-futures-spread",
 }
 
 
 def get_adapter(project: str) -> RunAdapter:
+    from quant_agent.adapters.futures_spread import FuturesSpreadAdapter
     from quant_agent.adapters.multifactor import MultifactorAdapter
 
     canonical = PROJECT_ALIASES.get(project, project)
     registry: dict[str, RunAdapter] = {
         MultifactorAdapter.project: MultifactorAdapter(),
+        FuturesSpreadAdapter.project: FuturesSpreadAdapter(),
     }
     if canonical not in registry:
         known = sorted(set(PROJECT_ALIASES) | set(registry))
@@ -63,9 +68,10 @@ def get_adapter(project: str) -> RunAdapter:
 
 
 def detect_project(run_dir: Path) -> str | None:
+    from quant_agent.adapters.futures_spread import FuturesSpreadAdapter
     from quant_agent.adapters.multifactor import MultifactorAdapter
 
-    for adapter in (MultifactorAdapter(),):
+    for adapter in (MultifactorAdapter(), FuturesSpreadAdapter()):
         if adapter.detect(run_dir):
             return adapter.project
     return None
