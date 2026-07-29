@@ -14,9 +14,7 @@ def _is_nan(value: object) -> bool:
         return True
     if isinstance(value, float) and math.isnan(value):
         return True
-    if isinstance(value, str) and value.strip().lower() in {"", "nan", "none"}:
-        return True
-    return False
+    return isinstance(value, str) and value.strip().lower() in {"", "nan", "none"}
 
 
 def check_ic_quality(ctx: RunContext, thresholds: dict[str, Any]) -> list[Finding]:
