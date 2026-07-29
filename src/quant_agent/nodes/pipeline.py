@@ -113,8 +113,8 @@ def llm_explain_node(state: ReviewState) -> ReviewState:
         return {**state, "explain_draft": _offline_explain(state)}
 
     try:
-        from langchain_openai import ChatOpenAI
         from langchain_core.messages import HumanMessage, SystemMessage
+        from langchain_openai import ChatOpenAI
     except ImportError:
         return {
             **state,
@@ -147,8 +147,8 @@ def llm_skeptic_node(state: ReviewState) -> ReviewState:
         return {**state, "skeptic_draft": _offline_skeptic(state)}
 
     try:
-        from langchain_openai import ChatOpenAI
         from langchain_core.messages import HumanMessage, SystemMessage
+        from langchain_openai import ChatOpenAI
     except ImportError:
         return {**state, "skeptic_draft": _offline_skeptic(state)}
 
