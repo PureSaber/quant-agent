@@ -8,6 +8,12 @@ from typing import Any
 from quant_agent.adapters.base import RunContext
 from quant_agent.state import Finding
 
+SPREAD_PROJECTS = frozenset({"quant-futures-spread", "future_spread"})
+
+
+def _is_spread_project(project: str) -> bool:
+    return project in SPREAD_PROJECTS
+
 
 def _is_nan(value: object) -> bool:
     if value is None:
@@ -23,6 +29,8 @@ def check_ic_quality(ctx: RunContext, thresholds: dict[str, Any]) -> list[Findin
     min_pos = float(thresholds.get("min_ic_positive_ratio", 0.52))
 
     if not ctx.ic_summary:
+        if _is_spread_project(ctx.project):
+            return findings
         findings.append(
             {
                 "severity": "error",
@@ -189,6 +197,60 @@ def check_backtest_stats(ctx: RunContext, thresholds: dict[str, Any]) -> list[Fi
     return findings
 
 
+def _spread_metrics(ctx: RunContext) -> dict[str, Any]:
+    """Normalize spread adapter metric/value rows or flat summary dict."""
+    if not ctx.backtest_stats:
+        return {}
+    rows = ctx.backtest_stats
+    if rows and "metric" in rows[0] and "value" in rows[0]:
+        return {str(row["metric"]): row["value"] for row in rows}
+    return dict(rows[0])
+
+
+def check_spread_performance(ctx: RunContext, thresholds: dict[str, Any]) -> list[Finding]:
+    findings: list[Finding] = []
+    metrics = _spread_metrics(ctx)
+    if not metrics:
+        findings.append(
+            {
+                "severity": "warn",
+                "code": "spread_summary_missing",
+                "message": "performance/summary.csv is empty or missing",
+                "factor": None,
+            }
+        )
+        return findings
+
+    min_sharpe = float(thresholds.get("min_sharpe", 0.0))
+    max_drawdown_limit = float(thresholds.get("max_drawdown_limit", -0.35))
+
+    sharpe = metrics.get("sharpe")
+    max_dd = metrics.get("max_drawdown")
+
+    if not _is_nan(sharpe) and float(sharpe) < min_sharpe:
+        findings.append(
+            {
+                "severity": "info",
+                "code": "sharpe_low",
+                "message": f"spread sharpe={float(sharpe):.2f} below {min_sharpe}",
+                "factor": None,
+            }
+        )
+    if not _is_nan(max_dd) and float(max_dd) < max_drawdown_limit:
+        findings.append(
+            {
+                "severity": "warn",
+                "code": "drawdown_high",
+                "message": (
+                    f"spread max_drawdown={float(max_dd):.2f} worse than {max_drawdown_limit}"
+                ),
+                "factor": None,
+            }
+        )
+
+    return findings
+
+
 def check_ic_decay(ctx: RunContext, thresholds: dict[str, Any]) -> list[Finding]:
     findings: list[Finding] = []
     if not ctx.ic_decay:
@@ -237,6 +299,13 @@ def run_all_rules(ctx: RunContext, agent_config: dict) -> list[Finding]:
     rules_cfg = agent_config.get("rules") or {}
     thresholds = agent_config.get("thresholds") or {}
     findings: list[Finding] = []
+
+    if _is_spread_project(ctx.project):
+        if rules_cfg.get("check_backtest_stats", True):
+            findings.extend(check_spread_performance(ctx, thresholds))
+        if rules_cfg.get("compare_with_previous", True):
+            findings.extend(compare_with_previous(ctx.run_dir, thresholds))
+        return findings
 
     findings.extend(check_ic_quality(ctx, thresholds))
 

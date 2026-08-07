@@ -27,8 +27,7 @@ def _build_parser() -> argparse.ArgumentParser:
     run_p.add_argument(
         "--offline",
         action="store_true",
-        default=True,
-        help="Skip LLM calls (default: true)",
+        help="Force offline mode (skip LLM). Default unless --llm is passed.",
     )
     run_p.add_argument(
         "--llm",
@@ -64,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 1
 
-        offline = not args.llm if args.llm else args.offline
+        offline = not args.llm if args.llm else True
         result = run_review(
             project=project,
             run_dir=args.run_dir,

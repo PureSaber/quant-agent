@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -228,12 +229,16 @@ def write_report_node(state: ReviewState) -> ReviewState:
 
 def _resolve_notes_root(run_dir: Path) -> Path:
     """Walk up from run_dir to find quant-research-notes or fall back to run_dir parent."""
+    workspace_root = os.environ.get("QUANT_WORKSPACE_ROOT")
+    if workspace_root:
+        candidate = Path(workspace_root) / "quant-research-notes"
+        if candidate.is_dir():
+            return candidate
+
     for parent in [run_dir, *run_dir.parents]:
         if (parent / "experiment-log").is_dir() or parent.name == "quant-research-notes":
             return parent
-        if parent.name == "quant_projects":
-            candidate = parent / "quant-research-notes"
-            if candidate.is_dir():
-                return candidate
-            break
+        notes = parent / "quant-research-notes"
+        if notes.is_dir():
+            return notes
     return run_dir.parent
