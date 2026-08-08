@@ -18,6 +18,7 @@ dependencies = [
 
 [project.optional-dependencies]
 llm = ["langchain-openai>=0.3"]
+workspace = ["quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git"]
 dev = ["pytest>=7.4", "ruff>=0.9.0"]
 
 [project.scripts]

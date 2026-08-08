@@ -248,7 +248,38 @@ def write_report_node(state: ReviewState) -> ReviewState:
 
 
 def _resolve_notes_root(run_dir: Path) -> Path:
-    """Resolve quant-research-notes using QUANT_WORKSPACE_ROOT or upward search."""
+    """Resolve quant-research-notes via workspace contract, then env/upward search."""
+    # Wave 3: prefer quant-workspace project path when the package is available.
+    try:
+        from quant_workspace.loader import load_workspace
+    except ImportError:
+        load_workspace = None  # type: ignore[assignment]
+
+    if load_workspace is not None:
+        env_root = os.environ.get("QUANT_WORKSPACE_ROOT")
+        cfg_candidates: list[Path] = []
+        if env_root:
+            cfg_candidates.append(
+                Path(env_root) / "quant-workspace" / "configs" / "default.workspace.yaml"
+            )
+        for parent in [run_dir, *run_dir.parents]:
+            cfg_candidates.append(
+                parent / "quant-workspace" / "configs" / "default.workspace.yaml"
+            )
+            if parent.name == "quant_projects":
+                break
+        for cfg in cfg_candidates:
+            if not cfg.is_file():
+                continue
+            try:
+                ws = load_workspace(cfg, root_override=env_root)
+                notes = ws.path("quant-research-notes", "repo")
+            except (OSError, KeyError, ValueError, TypeError):
+                break
+            if notes.is_dir():
+                return notes
+            break
+
     root = os.environ.get("QUANT_WORKSPACE_ROOT")
     if root:
         candidate = Path(root) / "quant-research-notes"
