@@ -8,7 +8,6 @@ from typing import Any, Literal
 from quant_agent.adapters.base import RunContext
 from quant_agent.state import Finding
 
-
 SPREAD_PROJECTS = frozenset({"quant-futures-spread", "future_spread", "futures-spread"})
 
 
