@@ -1,7 +1,26 @@
 from pathlib import Path
 
+from quant_agent.adapters.base import RunContext
 from quant_agent.adapters.futures_spread import FuturesSpreadAdapter
 from quant_agent.rules.engine import run_all_rules
+
+
+def test_spread_skips_ic_missing_error(tmp_path: Path) -> None:
+    ctx = RunContext(
+        project="quant-futures-spread",
+        run_dir=tmp_path,
+        ic_summary=[],
+        backtest_stats=[{"metric": "total_return", "value": 0.1}, {"metric": "calmar", "value": 1.2}],
+    )
+    findings = run_all_rules(ctx, {"thresholds": {}, "rules": {}})
+    codes = {f["code"] for f in findings}
+    assert "ic_missing" not in codes
+
+
+def test_spread_flags_missing_performance(tmp_path: Path) -> None:
+    ctx = RunContext(project="quant-futures-spread", run_dir=tmp_path, ic_summary=[], backtest_stats=[])
+    findings = run_all_rules(ctx, {"thresholds": {}, "rules": {}})
+    assert any(f["code"] == "spread_perf_missing" for f in findings)
 
 
 def test_spread_review_passes_without_ic_summary(tmp_path: Path) -> None:

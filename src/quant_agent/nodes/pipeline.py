@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -103,67 +104,86 @@ def _offline_skeptic(state: ReviewState) -> str:
     )
 
 
-def llm_explain_node(state: ReviewState) -> ReviewState:
+def llm_enabled(agent_config: dict) -> bool:
+    if not agent_config.get("enable_llm"):
+        return False
+    import os
+
+    return os.environ.get("QUANT_AGENT_LLM_OK") == "1"
+
+
+def _llm_user_payload(state: ReviewState, agent_config: dict) -> str:
+    send_paths = bool((agent_config.get("llm") or {}).get("send_paths", False))
+    run_dir = state["run_dir"] if send_paths else "<redacted>"
+    return run_dir
+
+
+def _run_llm_draft_node(
+    state: ReviewState,
+    *,
+    draft_key: str,
+    offline_fn: Callable[[ReviewState], str],
+    prompt_file: str,
+    default_system: str,
+    build_user: Callable[[ReviewState, dict], str],
+    import_fail_suffix: str = "",
+) -> ReviewState:
     if state.get("offline"):
-        return {**state, "explain_draft": _offline_explain(state)}
+        return {**state, draft_key: offline_fn(state)}
 
     agent_config = load_agent_config(
         Path(state["agent_config_path"]) if state.get("agent_config_path") else None
     )
-    if not agent_config.get("enable_llm"):
-        return {**state, "explain_draft": _offline_explain(state)}
+    if not llm_enabled(agent_config):
+        return {**state, draft_key: offline_fn(state)}
 
     try:
         from langchain_core.messages import HumanMessage, SystemMessage
         from langchain_openai import ChatOpenAI
     except ImportError:
-        return {
-            **state,
-            "explain_draft": _offline_explain(state)
-            + "\n\n(install `quant-agent[llm]` for LLM nodes)",
-        }
+        return {**state, draft_key: offline_fn(state) + import_fail_suffix}
 
-    prompt_path = Path(__file__).resolve().parents[1] / "prompts" / "explain.md"
-    system = prompt_path.read_text(encoding="utf-8") if prompt_path.is_file() else "Explain IC results."
+    prompt_path = Path(__file__).resolve().parents[1] / "prompts" / prompt_file
+    system = prompt_path.read_text(encoding="utf-8") if prompt_path.is_file() else default_system
     cfg_path = Path(state["agent_config_path"]) if state.get("agent_config_path") else None
     system += load_pitfalls(agent_config, cfg_path)
-    user = (
-        f"Project: {state['project']}\nRun dir: {state['run_dir']}\n\n"
-        f"IC summary:\n{_format_ic_table(state.get('ic_summary') or [])}\n\n"
-        f"Rule findings:\n{_format_findings(state.get('rule_findings') or [])}\n"
+    user = build_user(state, agent_config)
+    model = ChatOpenAI(
+        model=agent_config.get("model", "gpt-4.1-mini"),
+        temperature=float(agent_config.get("temperature", 0.2)),
     )
-    model = ChatOpenAI(model=agent_config.get("model", "gpt-4.1-mini"), temperature=0.2)
     response = model.invoke([SystemMessage(content=system), HumanMessage(content=user)])
-    return {**state, "explain_draft": str(response.content)}
+    return {**state, draft_key: str(response.content)}
+
+
+def llm_explain_node(state: ReviewState) -> ReviewState:
+    return _run_llm_draft_node(
+        state,
+        draft_key="explain_draft",
+        offline_fn=_offline_explain,
+        prompt_file="explain.md",
+        default_system="Explain IC results.",
+        build_user=lambda s, cfg: (
+            f"Project: {s['project']}\nRun dir: {_llm_user_payload(s, cfg)}\n\n"
+            f"IC summary:\n{_format_ic_table(s.get('ic_summary') or [])}\n\n"
+            f"Rule findings:\n{_format_findings(s.get('rule_findings') or [])}\n"
+        ),
+        import_fail_suffix="\n\n(install `quant-agent[llm]` for LLM nodes)",
+    )
 
 
 def llm_skeptic_node(state: ReviewState) -> ReviewState:
-    if state.get("offline"):
-        return {**state, "skeptic_draft": _offline_skeptic(state)}
-
-    agent_config = load_agent_config(
-        Path(state["agent_config_path"]) if state.get("agent_config_path") else None
+    return _run_llm_draft_node(
+        state,
+        draft_key="skeptic_draft",
+        offline_fn=_offline_skeptic,
+        prompt_file="skeptic.md",
+        default_system="Be skeptical.",
+        build_user=lambda s, _cfg: (
+            f"Explain draft:\n{s.get('explain_draft', '')}\n\n"
+            f"Rule findings:\n{_format_findings(s.get('rule_findings') or [])}\n"
+        ),
     )
-    if not agent_config.get("enable_llm"):
-        return {**state, "skeptic_draft": _offline_skeptic(state)}
-
-    try:
-        from langchain_core.messages import HumanMessage, SystemMessage
-        from langchain_openai import ChatOpenAI
-    except ImportError:
-        return {**state, "skeptic_draft": _offline_skeptic(state)}
-
-    prompt_path = Path(__file__).resolve().parents[1] / "prompts" / "skeptic.md"
-    system = prompt_path.read_text(encoding="utf-8") if prompt_path.is_file() else "Be skeptical."
-    cfg_path = Path(state["agent_config_path"]) if state.get("agent_config_path") else None
-    system += load_pitfalls(agent_config, cfg_path)
-    user = (
-        f"Explain draft:\n{state.get('explain_draft', '')}\n\n"
-        f"Rule findings:\n{_format_findings(state.get('rule_findings') or [])}\n"
-    )
-    model = ChatOpenAI(model=agent_config.get("model", "gpt-4.1-mini"), temperature=0.2)
-    response = model.invoke([SystemMessage(content=system), HumanMessage(content=user)])
-    return {**state, "skeptic_draft": str(response.content)}
 
 
 def write_report_node(state: ReviewState) -> ReviewState:
@@ -228,17 +248,19 @@ def write_report_node(state: ReviewState) -> ReviewState:
 
 
 def _resolve_notes_root(run_dir: Path) -> Path:
-    """Walk up from run_dir to find quant-research-notes or fall back to run_dir parent."""
-    workspace_root = os.environ.get("QUANT_WORKSPACE_ROOT")
-    if workspace_root:
-        candidate = Path(workspace_root) / "quant-research-notes"
+    """Resolve quant-research-notes using QUANT_WORKSPACE_ROOT or upward search."""
+    root = os.environ.get("QUANT_WORKSPACE_ROOT")
+    if root:
+        candidate = Path(root) / "quant-research-notes"
         if candidate.is_dir():
             return candidate
 
     for parent in [run_dir, *run_dir.parents]:
         if (parent / "experiment-log").is_dir() or parent.name == "quant-research-notes":
             return parent
-        notes = parent / "quant-research-notes"
-        if notes.is_dir():
-            return notes
+        if parent.name == "quant_projects":
+            candidate = parent / "quant-research-notes"
+            if candidate.is_dir():
+                return candidate
+            break
     return run_dir.parent

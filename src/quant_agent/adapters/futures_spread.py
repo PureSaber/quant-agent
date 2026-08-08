@@ -5,7 +5,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from quant_agent.adapters.base import RunContext, _read_csv_rows, _read_yaml
+from quant_agent.adapters.base import (
+    RunContext,
+    _load_config_snapshot,
+    _load_run_meta,
+    _read_csv_rows,
+)
 
 
 class FuturesSpreadAdapter:
@@ -36,19 +41,8 @@ class FuturesSpreadAdapter:
                 if key in row:
                     backtest_stats.append({"metric": key, "value": row[key]})
 
-        config_snapshot: dict = {}
-        if config_path and Path(config_path).is_file():
-            config_snapshot = _read_yaml(Path(config_path))
-        else:
-            for candidate in (run_dir / "config.snapshot.yaml", run_dir.parent / "config.snapshot.yaml"):
-                if candidate.is_file():
-                    config_snapshot = _read_yaml(candidate)
-                    break
-
-        run_meta: dict = {}
-        meta_path = run_dir / "run_meta.json"
-        if meta_path.is_file():
-            run_meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        config_snapshot = _load_config_snapshot(run_dir, config_path)
+        run_meta = _load_run_meta(run_dir)
 
         return RunContext(
             project=self.project,

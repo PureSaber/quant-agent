@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
@@ -30,9 +31,12 @@ class RunAdapter(Protocol):
     def load(self, run_dir: Path, config_path: Path | None = None) -> RunContext: ...
 
 
-def _read_csv_rows(path: Path) -> list[dict]:
+def _read_csv_rows(path: Path, *, max_read_mb: float = 32.0) -> list[dict]:
     if not path.is_file():
         return []
+    size_mb = path.stat().st_size / (1024 * 1024)
+    if size_mb > max_read_mb:
+        raise ValueError(f"CSV {path} is {size_mb:.1f}MB; limit is {max_read_mb}MB")
     df = pd.read_csv(path)
     return df.to_dict(orient="records")
 
@@ -41,6 +45,22 @@ def _read_yaml(path: Path) -> dict:
     if not path.is_file():
         return {}
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
+def _load_config_snapshot(run_dir: Path, config_path: Path | None = None) -> dict:
+    if config_path and Path(config_path).is_file():
+        return _read_yaml(Path(config_path))
+    for candidate in (run_dir / "config.snapshot.yaml", run_dir.parent / "config.snapshot.yaml"):
+        if candidate.is_file():
+            return _read_yaml(candidate)
+    return {}
+
+
+def _load_run_meta(run_dir: Path) -> dict:
+    meta_path = run_dir / "run_meta.json"
+    if meta_path.is_file():
+        return json.loads(meta_path.read_text(encoding="utf-8"))
+    return {}
 
 
 PROJECT_ALIASES = {

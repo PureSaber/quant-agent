@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "quant-agent review config",
+  "type": "object",
+  "properties": {
+    "enable_llm": { "type": "boolean" },
+    "model": { "type": "string" },
+    "temperature": { "type": "number" },
+    "thresholds": { "type": "object" },
+    "rules": { "type": "object" },
+    "llm": {
+      "type": "object",
+      "properties": {
+        "send_paths": { "type": "boolean" }
+      }
+    },
+    "output": { "type": "object" }
+  }
+}
