@@ -57,10 +57,24 @@ def _load_config_snapshot(run_dir: Path, config_path: Path | None = None) -> dic
 
 
 def _load_run_meta(run_dir: Path) -> dict:
+    metadata: dict = {}
     meta_path = run_dir / "run_meta.json"
     if meta_path.is_file():
-        return json.loads(meta_path.read_text(encoding="utf-8"))
-    return {}
+        metadata = json.loads(meta_path.read_text(encoding="utf-8"))
+    standard_manifest = run_dir / "standard" / "run_manifest.json"
+    if standard_manifest.is_file():
+        from quant_lab.contracts import load_and_validate_run
+
+        manifest = load_and_validate_run(run_dir)
+        metadata["standard_contract"] = {
+            "schema_version": manifest.schema_version,
+            "project": manifest.project,
+            "run_id": manifest.run_id,
+            "code_version": manifest.code_version,
+            "dataset_snapshots": manifest.dataset_snapshots,
+            "validated": True,
+        }
+    return metadata
 
 
 PROJECT_ALIASES = {
