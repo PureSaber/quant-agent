@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from quant_agent.adapters.multifactor import MultifactorAdapter
 from quant_lab.contracts import write_standard_run
+
+from quant_agent.adapters.multifactor import MultifactorAdapter
 from tests.fixtures import write_multifactor_fixture
 
 
