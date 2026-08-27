@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quant-agent"
-version = "0.1.0"
+version = "0.2.0"
 description = "LangGraph review layer for PureSaber quant framework runs"
 readme = "README.md"
 license = { text = "MIT" }
@@ -14,6 +14,7 @@ dependencies = [
     "langchain-core>=0.3",
     "pandas>=2.0",
     "pyyaml>=6.0",
+    "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@v0.2.0",
 ]
 
 [project.optional-dependencies]

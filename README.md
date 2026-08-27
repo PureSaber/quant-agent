@@ -7,6 +7,7 @@ LangGraph review layer for the PureSaber quant stack. It reads completed run out
 | Does | Does not |
 |------|----------|
 | Post-backtest review of IC / stats / IC decay CSVs | Fetch market data |
+| Validate the immutable standard run contract before review | Repair mutated run artifacts |
 | Rule-based QA (NaN factors, weak IC, backtest stats, IC decay, run diff) | Run backtests or replace `quant-data-kit` |
 | Optional LLM explain + skeptic nodes | Embed inside multifactor |
 | Write markdown to `experiment-log/` | Require API keys in CI (`--offline`) |
@@ -42,7 +43,7 @@ Exit code `2` when deterministic rules report an `error` severity finding.
 load → rules → explain → skeptic → write_report
 ```
 
-- **load**: adapter reads `ic_summary.csv`, `backtest_stats.csv`, `config.snapshot.yaml`, `run_meta.json`
+- **load**: adapter validates `standard/run_manifest.json`, then reads project-specific QA files
 - **rules**: Python checks (IC quality, alt-data NaN, PIT config)
 - **explain / skeptic**: LLM when `--llm`, else offline templates
 - **write**: `experiment-log/review_*.md` + `review_manifest.json`
