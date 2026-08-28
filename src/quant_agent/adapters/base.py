@@ -61,17 +61,21 @@ def _load_run_meta(run_dir: Path) -> dict:
     meta_path = run_dir / "run_meta.json"
     if meta_path.is_file():
         metadata = json.loads(meta_path.read_text(encoding="utf-8"))
-    standard_manifest = run_dir / "standard" / "run_manifest.json"
-    if standard_manifest.is_file():
-        from quant_lab.contracts import load_and_validate_run
+    standard_dir = run_dir / "standard"
+    has_standard_contract = (standard_dir / "v2").exists() or (
+        standard_dir / "run_manifest.json"
+    ).is_file()
+    if has_standard_contract:
+        from quant_lab import load_and_validate_standard_run
 
-        manifest = load_and_validate_run(run_dir)
+        manifest = load_and_validate_standard_run(run_dir)
         metadata["standard_contract"] = {
             "schema_version": manifest.schema_version,
             "project": manifest.project,
             "run_id": manifest.run_id,
             "code_version": manifest.code_version,
             "dataset_snapshots": manifest.dataset_snapshots,
+            "profile": getattr(manifest, "profile", "legacy-v1"),
             "validated": True,
         }
     return metadata
