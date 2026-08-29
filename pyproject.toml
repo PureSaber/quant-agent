@@ -16,7 +16,7 @@ dependencies = [
     "pyyaml>=6.0",
     "tomli>=2.0; python_version < '3.11'",
     "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@v0.3.1",
-    "quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git@v0.2.0",
+    "quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git@v0.2.1",
 ]
 
 [project.optional-dependencies]
