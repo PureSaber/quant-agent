@@ -46,9 +46,7 @@ def check_ic_quality(ctx: RunContext, thresholds: dict[str, Any]) -> list[Findin
     min_pos = float(thresholds.get("min_ic_positive_ratio", 0.52))
 
     if not ctx.ic_summary:
-        findings.append(
-            _finding("error", "ic_missing", "ic_summary.csv is empty or missing")
-        )
+        findings.append(_finding("error", "ic_missing", "ic_summary.csv is empty or missing"))
         return findings
 
     for row in ctx.ic_summary:
@@ -200,10 +198,7 @@ def check_spread_performance(ctx: RunContext, thresholds: dict[str, Any]) -> lis
             _finding(
                 "warn",
                 "drawdown_high",
-                (
-                    f"spread max_drawdown={float(max_dd):.2f} "
-                    f"worse than {max_drawdown_limit}"
-                ),
+                (f"spread max_drawdown={float(max_dd):.2f} worse than {max_drawdown_limit}"),
             )
         )
     if not _is_nan(total_return) and float(total_return) < min_return:

@@ -12,7 +12,11 @@ def test_rule_check_flags_nan_alt_factor(tmp_path: Path) -> None:
         run_dir=tmp_path,
         ic_summary=[
             {"factor": "pe_ratio", "mean_ic": 0.04, "ic_positive_ratio": 0.55},
-            {"factor": "forecast_score", "mean_ic": float("nan"), "ic_positive_ratio": float("nan")},
+            {
+                "factor": "forecast_score",
+                "mean_ic": float("nan"),
+                "ic_positive_ratio": float("nan"),
+            },
         ],
         factor_list=["pe_ratio", "forecast_score"],
         config_snapshot={

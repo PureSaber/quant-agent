@@ -194,7 +194,7 @@ def write_report_node(state: ReviewState) -> ReviewState:
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_name = run_dir.name
 
-    report_body = f"""# Quant review — {state['project']}
+    report_body = f"""# Quant review — {state["project"]}
 
 - Run dir: `{run_dir}`
 - Generated: {ts}
@@ -263,9 +263,7 @@ def _resolve_notes_root(run_dir: Path) -> Path:
                 Path(env_root) / "quant-workspace" / "configs" / "default.workspace.yaml"
             )
         for parent in [run_dir, *run_dir.parents]:
-            cfg_candidates.append(
-                parent / "quant-workspace" / "configs" / "default.workspace.yaml"
-            )
+            cfg_candidates.append(parent / "quant-workspace" / "configs" / "default.workspace.yaml")
             if parent.name == "quant_projects":
                 break
         for cfg in cfg_candidates:
