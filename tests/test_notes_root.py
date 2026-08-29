@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import pytest
 import yaml
 
 from quant_agent.nodes.pipeline import _resolve_notes_root
@@ -17,7 +16,6 @@ def test_resolve_notes_from_workspace_env(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_resolve_notes_via_quant_workspace_package(tmp_path: Path, monkeypatch) -> None:
-    pytest.importorskip("quant_workspace")
     root = tmp_path
     notes = root / "quant-research-notes"
     notes.mkdir()
@@ -29,7 +27,10 @@ def test_resolve_notes_via_quant_workspace_package(tmp_path: Path, monkeypatch) 
             {
                 "root": str(root),
                 "projects": {
-                    "quant-research-notes": {"repo": "quant-research-notes", "notes": "experiment-log"},
+                    "quant-research-notes": {
+                        "repo": "quant-research-notes",
+                        "notes": "experiment-log",
+                    },
                 },
             }
         ),

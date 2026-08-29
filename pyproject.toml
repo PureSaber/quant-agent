@@ -4,23 +4,25 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quant-agent"
-version = "0.3.0"
+version = "0.3.1"
 description = "LangGraph review layer for PureSaber quant framework runs"
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "langgraph>=0.4",
     "langchain-core>=0.3",
-    "pandas>=2.0",
+    "pandas>=2.0,<3.0",
     "pyyaml>=6.0",
-    "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@v0.3.0",
+    "tomli>=2.0; python_version < '3.11'",
+    "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@27489d270e132adbec1bced93eb2ae84ad5e1a9b",
+    "quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git@1a9134ac329704060a3ae96cc81e31db481a938f",
 ]
 
 [project.optional-dependencies]
 llm = ["langchain-openai>=0.3"]
-workspace = ["quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git"]
-dev = ["pytest>=7.4", "ruff>=0.9.0"]
+workspace = []
+dev = ["coverage>=7.6", "pytest>=7.4", "ruff>=0.9.0"]
 
 [project.scripts]
 quant-review = "quant_agent.cli:main"
@@ -31,6 +33,23 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+addopts = ["--strict-markers"]
+
+[tool.coverage.run]
+branch = true
+source = ["quant_agent"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = false
+
+[tool.quant-workspace]
+layer = "orchestration"
+schemas = [
+    { id = "standard/v2", version = "2.0.0" },
+]
+lock-files = ["requirements.lock"]
 
 [tool.ruff]
 line-length = 100
