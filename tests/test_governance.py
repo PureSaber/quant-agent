@@ -27,16 +27,18 @@ def test_release_and_workspace_governance_are_declared() -> None:
         "lock-files": ["requirements.lock"],
     }
     dependencies = "\n".join(project["dependencies"])
-    assert f"quant-lab.git@{LAB_COMMIT}" in dependencies
-    assert f"quant-workspace.git@{WORKSPACE_COMMIT}" in dependencies
+    assert "quant-lab.git@v0.3.1" in dependencies
+    assert "quant-workspace.git@v0.2.0" in dependencies
     assert not re.search(r"git\+[^\s]+@(main|master|latest)(?:\b|$)", dependencies)
 
 
 def test_lock_covers_internal_and_cross_python_dependencies() -> None:
     lock = (ROOT / "requirements.lock").read_text(encoding="utf-8")
 
-    assert f"quant-lab.git@{LAB_COMMIT}" in lock
-    assert f"quant-workspace.git@{WORKSPACE_COMMIT}" in lock
-    assert 'tomli==2.2.1 ; python_version < "3.11"' in lock
+    assert "quant-lab.git@v0.3.1" in lock
+    assert "quant-workspace.git@v0.2.0" in lock
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert LAB_COMMIT in readme and WORKSPACE_COMMIT in readme
+    assert re.search(r'tomli==[^\s]+ ; python_version < "3\.11"', lock)
     assert "setuptools==" in lock
     assert not re.search(r"git\+[^\s]+@(main|master|latest)(?:\b|$)", lock)

@@ -57,7 +57,8 @@ load → rules → explain → skeptic → write_report
 
 This repository declares the `orchestration` layer and consumes `standard/v2@2.0.0` through
 `[tool.quant-workspace]`. The declared external lock is `requirements.lock`; a release audit records
-its SHA-256. Internal runtime dependencies are immutable and correspond to published releases:
+its SHA-256. Internal runtime dependencies use published annotated tags in both project metadata
+and the lock; their verified peeled commits are:
 
 - `quant-lab v0.3.1` at commit `27489d270e132adbec1bced93eb2ae84ad5e1a9b`;
 - `quant-workspace v0.2.0` at commit `1a9134ac329704060a3ae96cc81e31db481a938f`.
