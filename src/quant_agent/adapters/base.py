@@ -10,6 +10,8 @@ from typing import Protocol
 import pandas as pd
 import yaml
 
+from quant_agent.adapters.standard import StandardArtifacts, load_standard_artifacts
+
 
 @dataclass
 class RunContext:
@@ -56,28 +58,13 @@ def _load_config_snapshot(run_dir: Path, config_path: Path | None = None) -> dic
     return {}
 
 
-def _load_run_meta(run_dir: Path) -> dict:
+def _load_legacy_run_meta(run_dir: Path, standard: StandardArtifacts | None = None) -> dict:
     metadata: dict = {}
     meta_path = run_dir / "run_meta.json"
     if meta_path.is_file():
         metadata = json.loads(meta_path.read_text(encoding="utf-8"))
-    standard_dir = run_dir / "standard"
-    has_standard_contract = (standard_dir / "v2").exists() or (
-        standard_dir / "run_manifest.json"
-    ).is_file()
-    if has_standard_contract:
-        from quant_lab import load_and_validate_standard_run
-
-        manifest = load_and_validate_standard_run(run_dir)
-        metadata["standard_contract"] = {
-            "schema_version": manifest.schema_version,
-            "project": manifest.project,
-            "run_id": manifest.run_id,
-            "code_version": manifest.code_version,
-            "dataset_snapshots": manifest.dataset_snapshots,
-            "profile": getattr(manifest, "profile", "legacy-v1"),
-            "validated": True,
-        }
+    if standard is not None:
+        metadata["standard_contract"] = standard.contract
     return metadata
 
 
@@ -108,6 +95,11 @@ def get_adapter(project: str) -> RunAdapter:
 def detect_project(run_dir: Path) -> str | None:
     from quant_agent.adapters.futures_spread import FuturesSpreadAdapter
     from quant_agent.adapters.multifactor import MultifactorAdapter
+
+    run_dir = Path(run_dir)
+    standard = load_standard_artifacts(run_dir)
+    if standard is not None and standard.is_v2:
+        return standard.project
 
     for adapter in (MultifactorAdapter(), FuturesSpreadAdapter()):
         if adapter.detect(run_dir):
