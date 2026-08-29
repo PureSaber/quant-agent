@@ -137,7 +137,7 @@ pyyaml==6.0.3
     #   quant-workspace
 quant-lab @ git+https://github.com/PureSaber/quant-lab.git@v0.3.1
     # via quant-agent (pyproject.toml)
-quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git@v0.2.0
+quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git@v0.2.1
     # via quant-agent (pyproject.toml)
 regex==2026.7.19
     # via tiktoken
