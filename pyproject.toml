@@ -15,8 +15,8 @@ dependencies = [
     "pandas>=2.0,<3.0",
     "pyyaml>=6.0",
     "tomli>=2.0; python_version < '3.11'",
-    "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@27489d270e132adbec1bced93eb2ae84ad5e1a9b",
-    "quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git@1a9134ac329704060a3ae96cc81e31db481a938f",
+    "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@v0.3.1",
+    "quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git@v0.2.0",
 ]
 
 [project.optional-dependencies]
