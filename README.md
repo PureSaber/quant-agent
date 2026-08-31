@@ -61,7 +61,7 @@ its SHA-256. Internal runtime dependencies use published annotated tags in both 
 and the lock; their verified peeled commits are:
 
 - `quant-lab v0.3.1` at commit `27489d270e132adbec1bced93eb2ae84ad5e1a9b`;
-- `quant-workspace v0.2.1` at commit `d94114084b8993e4e5140cee29e92e1db53d1b04`.
+- `quant-workspace v0.3.1` at commit `537388a4d9548b612fa1e4b306c482c04b45c433`.
 
 For a run containing `standard/v2`, the agent first calls the version-independent `quant-lab`
 validator. Only after all manifest, hash, schema, lineage, profile, and file-set checks succeed does
