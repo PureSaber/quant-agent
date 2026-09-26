@@ -14,9 +14,9 @@ dependencies = [
     "langchain-core>=0.3",
     "pandas>=2.0,<3.0",
     "pyyaml>=6.0",
-    "quant-factors @ git+https://github.com/PureSaber/quant-factors.git@ba021bbe11696f0bd5cda0ee047515793f11855d",
+    "quant-factors @ git+https://github.com/PureSaber/quant-factors.git@313243588a0ea090a399244eccbc8e1833119b3a",
     "tomli>=2.0; python_version < '3.11'",
-    "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@bace19c01cf3ecd77fbbb4a5bc75f2ce3498902f",
+    "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@8f47d2ba69ee532d7559957e4b2fb36c2b13a3d8",
     "quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git@v0.3.1",
 ]
 
@@ -28,6 +28,7 @@ dev = ["coverage>=7.6", "pytest>=7.4", "ruff>=0.9.0"]
 [project.scripts]
 quant-review = "quant_agent.cli:main"
 quant-propose = "quant_agent.research_assistant:main"
+quant-research-history = "quant_agent.research_history:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

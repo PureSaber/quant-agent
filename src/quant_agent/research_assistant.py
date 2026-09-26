@@ -13,8 +13,10 @@ from pathlib import Path
 
 import yaml
 from quant_factors.core import list_factors
-from quant_factors.research import factor_requirements
+from quant_factors.expressions import expression_requirements
 from quant_lab.research import canonical, validate_recipe
+
+from quant_agent.research_history import research_history
 
 
 def similar_studies(database: Path | None, query: str, *, limit: int = 5) -> list[dict]:
@@ -56,10 +58,17 @@ def _model_proposal(source: str, template: dict, model: str, invoke=None) -> dic
         "evidence_quotes must contain exact nonempty substrings from the source. "
         "The model cannot change input files, costs, risk limits, study identity or holdout."
     )
+    allowed_factors = list_factors()
+    allowed_factors.update(
+        {
+            name: f"Restricted custom expression: {expression}"
+            for name, expression in template.get("factor_expressions", {}).items()
+        }
+    )
     request = json.dumps(
         {
             "source_text": source,
-            "allowed_factors": list_factors(),
+            "allowed_factors": allowed_factors,
             "template": {
                 k: template[k]
                 for k in ("hypothesis", "factors", "strategy", "variants")
@@ -96,11 +105,12 @@ def validate_proposal(proposal: dict, source: str, template: dict) -> dict:
         or any(not isinstance(q, str) or not q.strip() or q not in source for q in quotes)
     ):
         raise ValueError("Evidence quotations must occur verbatim in the source")
-    factor_requirements(list(proposal["factors"]))
+    expressions = template.get("factor_expressions") or {}
+    expression_requirements(list(proposal["factors"]), expressions)
     recipe = deepcopy(template)
     recipe.update({k: proposal[k] for k in ("hypothesis", "factors", "variants")})
     for variant in recipe["variants"]:
-        factor_requirements(list(variant.get("factors", recipe["factors"])))
+        expression_requirements(list(variant.get("factors", recipe["factors"])), expressions)
     return validate_recipe(recipe)
 
 
@@ -111,6 +121,7 @@ def propose(
     *,
     study_id: str,
     database: Path | None = None,
+    studies_root: Path | None = None,
     use_llm: bool = False,
     model: str = "",
     invoke=None,
@@ -120,8 +131,7 @@ def propose(
         raise ValueError("Source exceeds 200 KB; extract the relevant text explicitly")
     source = source_bytes.decode("utf-8-sig")
     template = yaml.safe_load(template_path.read_text(encoding="utf-8"))
-    template.update(study_id=study_id, mode="exploratory")
-    template.pop("holdout", None)
+    template["study_id"] = study_id
     validate_recipe(template)
     if use_llm:
         proposal = _model_proposal(source, template, model, invoke)
@@ -160,8 +170,16 @@ def propose(
         "model": model if use_llm else None,
         "evidence_quotes": proposal["evidence_quotes"],
     }
-    requirements = factor_requirements(list(recipe["factors"]))
+    requirements = expression_requirements(
+        list(recipe["factors"]), recipe.get("factor_expressions") or {}
+    )
     similar = similar_studies(database, recipe["hypothesis"])
+    history = research_history(
+        recipe["hypothesis"],
+        database=database,
+        studies_root=studies_root,
+        recipe=recipe,
+    )
     output.mkdir(parents=True, exist_ok=False)
     (output / "source.txt").write_bytes(source_bytes)
     (output / "recipe.yaml").write_text(
@@ -173,6 +191,19 @@ def propose(
         "mode": mode,
         "requirements": requirements,
         "similar_studies": similar,
+        "history": history,
+        "model_invocation": {
+            "requested": use_llm,
+            "model": model if use_llm else None,
+            "transport": (
+                "configured-provider"
+                if use_llm and invoke is None
+                else "injected-test-double"
+                if use_llm
+                else "none"
+            ),
+            "online_model_called": bool(use_llm and invoke is None),
+        },
         "executed": False,
         "status": "draft-requires-research-preflight",
     }
@@ -188,8 +219,8 @@ def propose(
         "",
         "- 核对来源中的经济假设、因子方向与参数范围。",
         "- 检查数据预检结果；基本面必须有真实披露时间。",
-        "- 本草案默认是探索研究；前向留出需另建未来区间并预登记。",
-        "- 新公式必须先实现并验证后注册；不会自动执行来源文本或模型代码。",
+        f"- 研究模式沿用模板：{recipe['mode']}；holdout定义不会由助手改写。",
+        "- 受限公式必须先通过校验；不会执行来源文本或模型生成的代码。",
         "",
         "## 数据需求",
         "",
@@ -202,6 +233,25 @@ def propose(
         "```json",
         json.dumps(similar, ensure_ascii=False, indent=2),
         "```",
+        "",
+        "## 历史证据核验",
+        "",
+        f"- 引用准确率：{history['citation_verification']['accuracy']}",
+        "- 已核验引用：{}/{}".format(
+            history["citation_verification"]["valid"],
+            history["citation_verification"]["checked"],
+        ),
+        f"- 自动运行：{history['boundaries']['automatic_run']}",
+        "",
+        "### 最小对照",
+        "",
+        "```json",
+        json.dumps(history["minimum_comparison"], ensure_ascii=False, indent=2),
+        "```",
+        "",
+        "### 缺失数据",
+        "",
+        *[f"- {item}" for item in history["missing_data"]],
     ]
     (output / "research-note.md").write_text("\n".join(lines), encoding="utf-8")
     return evidence
@@ -214,6 +264,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--study-id", required=True)
     parser.add_argument("--database", type=Path)
+    parser.add_argument("--studies-root", type=Path)
     parser.add_argument("--llm", action="store_true")
     parser.add_argument("--model", default="")
     args = parser.parse_args()
@@ -225,6 +276,7 @@ def main():
                 args.output,
                 study_id=args.study_id,
                 database=args.database,
+                studies_root=args.studies_root,
                 use_llm=args.llm,
                 model=args.model,
             ),

@@ -117,3 +117,44 @@ def test_structured_import_preserves_escaped_source_quotes(tmp_path):
     evidence = propose(source, tpl, tmp_path / "draft", study_id="imported")
     assert evidence["mode"] == "structured-import"
     assert evidence["executed"] is False
+
+
+def test_proposal_preserves_cost_risk_and_holdout_boundaries(tmp_path):
+    source = tmp_path / "paper.txt"
+    source.write_text("Momentum requires a prospective evaluation.", encoding="utf-8")
+    prospective = template()
+    prospective["mode"] = "prospective"
+    prospective["risk"] = {"max_drawdown": 0.15, "max_single_weight": 0.3}
+    prospective["holdout"] = {"start": "2024-07-01", "end": "2024-12-31"}
+    tpl = tmp_path / "template.yaml"
+    tpl.write_text(yaml.safe_dump(prospective))
+    evidence = propose(source, tpl, tmp_path / "draft", study_id="prospective-draft")
+    recipe = yaml.safe_load((tmp_path / "draft/recipe.yaml").read_text(encoding="utf-8"))
+    assert recipe["costs"] == prospective["costs"]
+    assert recipe["risk"] == prospective["risk"]
+    assert recipe["holdout"] == prospective["holdout"]
+    assert recipe["mode"] == "prospective"
+    assert evidence["model_invocation"] == {
+        "requested": False,
+        "model": None,
+        "transport": "none",
+        "online_model_called": False,
+    }
+
+
+def test_proposal_accepts_validated_template_expression_without_model_rewriting_it():
+    custom = template()
+    custom["factor_expressions"] = {
+        "risk_adjusted_momentum": "momentum_20d / maximum(volatility_20d, 0.0001)"
+    }
+    custom["factors"] = {"risk_adjusted_momentum": 1}
+    proposal = {
+        "hypothesis": "Risk-adjusted momentum may persist",
+        "factors": {"risk_adjusted_momentum": 1},
+        "variants": [],
+        "evidence_quotes": ["Risk-adjusted momentum"],
+    }
+    validated = validate_proposal(
+        proposal, "Risk-adjusted momentum requires paired testing.", custom
+    )
+    assert validated["factor_expressions"] == custom["factor_expressions"]
