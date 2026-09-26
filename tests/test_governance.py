@@ -12,7 +12,7 @@ import quant_agent
 
 ROOT = Path(__file__).resolve().parents[1]
 LAB_COMMIT = "8f47d2ba69ee532d7559957e4b2fb36c2b13a3d8"
-FACTORS_COMMIT = "ff31259bb8a143c09c8a3b7f3a6d919ddbf66b32"
+FACTORS_COMMIT = "e5da58606081d9f733cdb0fec96ca408003b4e41"
 WORKSPACE_COMMIT = "537388a4d9548b612fa1e4b306c482c04b45c433"
 
 
