@@ -1,0 +1,55 @@
+{
+  "query": "A股动量与低波动在交易成本后是否仍有增量收益",
+  "source_text": "研究假设：在相同股票池、调仓频率和交易成本下，20日动量与低波动组合可能改善成本后收益；该结论必须通过成对样本外回放验证。",
+  "proposal": {
+    "hypothesis": "20日动量与低波动组合可能改善成本后收益",
+    "factors": {
+      "momentum_20d": 1,
+      "volatility_20d": -1
+    },
+    "variants": [],
+    "evidence_quotes": [
+      "20日动量与低波动组合可能改善成本后收益",
+      "该结论必须通过成对样本外回放验证"
+    ]
+  },
+  "template": {
+    "schema_version": "quant.research-recipe/v1",
+    "study_id": "a-share-momentum-lowvol-eval",
+    "hypothesis": "20日动量与低波动组合可能改善成本后收益",
+    "mode": "exploratory",
+    "backend": "equity",
+    "inputs": {
+      "bundle": "inputs"
+    },
+    "interval": {
+      "start": "2024-01-01",
+      "end": "2024-06-30"
+    },
+    "factors": {
+      "momentum_20d": 1,
+      "volatility_20d": -1
+    },
+    "strategy": {
+      "family": "rank",
+      "frequency": "weekly",
+      "top_n": 20,
+      "max_weight": 0.05,
+      "cash_buffer": 0.05,
+      "trend_window": 60
+    },
+    "costs": {
+      "initial_capital": 1000000,
+      "commission": 0.0003,
+      "min_commission": 5,
+      "stamp_tax": 0.0005,
+      "slippage": 0.001,
+      "participation_rate": 0.01
+    },
+    "risk": {
+      "max_drawdown": 0.15,
+      "max_single_weight": 0.08
+    },
+    "variants": []
+  }
+}

@@ -38,9 +38,22 @@ quant-review detect <validated-run-dir>
 
 # enable LLM (needs OPENAI_API_KEY)
 quant-review run --project multifactor --run-dir PATH --llm
+
+# draft only; preserves costs, risk and holdout and never starts a run
+quant-propose paper.txt --template recipe.yaml --output draft --study-id momentum-v2 \
+  --database studies/experiments.db --studies-root studies
+
+# retrieve cited study results and failures with artifact verification
+quant-research-history "momentum low volatility" --database studies/experiments.db \
+  --studies-root studies --recipe recipe.yaml --output advice.json
 ```
 
 Exit code `2` when deterministic rules report an `error` severity finding.
+
+The UI-facing `quant_agent.research_advice(...)` API returns read-only historical matches,
+re-verifiable citations, completed results, failures, artifact checks, a minimal paired comparison
+and explicit missing-data notes. It does not select a winner, modify governed recipe fields or run
+an experiment. See [the research assistant guide](docs/research-assistant.md).
 
 ## Graph
 
@@ -60,8 +73,8 @@ This repository declares the `orchestration` layer and consumes `standard/v2@2.0
 its SHA-256. Internal runtime dependencies use immutable commit pins or published annotated tags
 in both project metadata and the lock; their verified commits are:
 
-- `quant-lab` research contract at commit `bace19c01cf3ecd77fbbb4a5bc75f2ce3498902f`;
-- `quant-factors` research registry at commit `ba021bbe11696f0bd5cda0ee047515793f11855d`;
+- `quant-lab` expression-aware research contract at commit `e65b074f3fe18f51858f857ecab1751da0ff56af`;
+- `quant-factors` restricted research expressions at commit `d12247ba5d3fa50ebb7179eee6df0f5af9802abd`;
 - `quant-workspace v0.3.1` at commit `537388a4d9548b612fa1e4b306c482c04b45c433`.
 
 For a run containing `standard/v2`, the agent first calls the version-independent `quant-lab`
