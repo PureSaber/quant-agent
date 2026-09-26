@@ -3,6 +3,8 @@ import json
 from copy import deepcopy
 from pathlib import Path
 
+import pytest
+from quant_lab.research import execute_study
 from quant_lab.trials import TrialRegistry
 
 from quant_agent.research_assistant import validate_proposal
@@ -172,6 +174,44 @@ def test_artifact_path_cannot_escape_attempt_directory(tmp_path: Path) -> None:
     assert "escapes" in result["items"][0]["reason"]
 
 
+@pytest.mark.parametrize("include_reports", [False, True])
+def test_history_reads_real_registry_result_references(tmp_path: Path, include_reports) -> None:
+    case = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    root = tmp_path / "registered"
+
+    def executor(recipe, candidate, out):
+        (out / "returns.csv").write_text("date,net_return\n2025-01-02,0.01\n", encoding="utf-8")
+        return {"metrics": {"total_return": 0.01}}
+
+    study = execute_study(
+        case["template"], root, identity={"code": "test"}, data_identity={}, executor=executor
+    )
+    database = root / "experiments.db"
+    before = database.read_bytes()
+    advice = research_history(
+        case["query"],
+        database=database,
+        studies_root=root if include_reports else None,
+        recipe=case["template"],
+    )
+    completed = advice["matches"][0]["completed_results"]
+    assert len(completed) == study["completed"]
+    assert all(row["metrics"] == {"total_return": 0.01} for row in completed)
+    assert all(row["artifact_validation"]["status"] == "verified" for row in completed)
+    assert advice["citation_verification"]["accuracy"] == 1.0
+    assert advice["minimum_comparison"]["control"] is not None
+    assert database.read_bytes() == before
+
+    # A changed registered result may not be replaced by a stale summary copy.
+    result_path = root / "attempts" / completed[0]["attempt_id"] / "result.json"
+    result_path.write_text('{"metrics":{"total_return":99}}', encoding="utf-8")
+    changed = research_history(case["query"], database=database, studies_root=root)
+    invalid = changed["matches"][0]["completed_results"][0]
+    assert invalid["metrics"] == {}
+    assert "digest" in invalid["result_error"]
+    assert changed["citation_verification"]["accuracy"] == 1.0
+
+
 def test_history_cli_writes_json_without_running_research(tmp_path: Path) -> None:
     root, _, case = _history(tmp_path)
     output = tmp_path / "advice.json"
@@ -179,3 +219,52 @@ def test_history_cli_writes_json_without_running_research(tmp_path: Path) -> Non
     result = json.loads(output.read_text(encoding="utf-8"))
     assert result["matches"][0]["study_id"] == case["template"]["study_id"]
     assert result["boundaries"]["automatic_run"] is False
+
+
+def test_successful_resume_keeps_earlier_failures_in_report_only_history(tmp_path: Path) -> None:
+    case = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    root = tmp_path / "resumed"
+    first = True
+
+    def executor(recipe, candidate, out):
+        nonlocal first
+        if first:
+            first = False
+            raise ValueError("initial data gap")
+        (out / "returns.csv").write_text("date,net_return\n2025-01-02,0.01\n", encoding="utf-8")
+        return {"metrics": {"total_return": 0.01}}
+
+    for _ in range(2):
+        final = execute_study(
+            case["template"], root, identity={"code": "test"}, data_identity={}, executor=executor
+        )
+    assert final["failed"] == 0
+    history = research_history(case["query"], studies_root=root)
+    assert len(history["matches"][0]["failures"]) == 1
+    assert history["matches"][0]["failures"][0]["error"] == "initial data gap"
+    assert history["citation_verification"]["accuracy"] == 1.0
+
+
+def test_registry_result_reference_must_stay_inside_its_study(tmp_path: Path) -> None:
+    database = tmp_path / "study" / "experiments.db"
+    database.parent.mkdir()
+    registry = TrialRegistry(database)
+    candidate = {"name": "base"}
+    registry.register(
+        "paths",
+        {
+            "hypothesis": "path test",
+            "parameters": [candidate],
+            "code_identity": {"test": "fixed"},
+            "selection_rule": "fixed",
+        },
+    )
+    attempt = registry.start("paths", candidate)
+    outside = tmp_path / "result.json"
+    outside.write_text("{}", encoding="utf-8")
+    registry.finish(attempt, "completed", {"result": "../result.json", "sha256": _digest(outside)})
+    result = research_history("path", database=database)
+    completed = result["matches"][0]["completed_results"][0]
+    assert completed["metrics"] == {}
+    assert "escapes" in completed["result_error"]
+    assert result["citation_verification"]["accuracy"] == 1.0

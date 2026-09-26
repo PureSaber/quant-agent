@@ -171,6 +171,34 @@ def verify_citations(citations: list[dict]) -> dict:
     }
 
 
+def _registered_result(database: Path, row: dict) -> dict:
+    """Resolve the result reference emitted by execute_study, using its registered hash."""
+    payload = row["payload"]
+    if row["status"] != "completed" or "result" not in payload:
+        return row
+    try:
+        path = (database.parent / payload["result"]).resolve()
+        if database.parent.resolve() not in path.parents:
+            raise ValueError("registered result path escapes the study directory")
+        if _digest_file(path) != payload.get("sha256"):
+            raise ValueError("registered result digest mismatch")
+        document = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(document, dict) or any(
+            document.get(key) != row[key] for key in ("study_id", "attempt_id", "status")
+        ):
+            raise ValueError("registered result identity mismatch")
+        return {
+            **row,
+            "payload": document,
+            "_source": {"type": "json", "path": path, "document": document},
+            "_json_pointer": "",
+            "_attempt_dir": path.parent,
+        }
+    except (OSError, ValueError, TypeError) as exc:
+        # Preserve the terminal event without inventing metrics or trusting a summary copy.
+        return {**row, "_result_error": str(exc)}
+
+
 def _load_sqlite(database: Path | None) -> list[dict]:
     if database is None:
         return []
@@ -204,7 +232,7 @@ def _load_sqlite(database: Path | None) -> list[dict]:
             "payload": json.loads(payload_text),
         }
         if status in {"completed", "failed", "interrupted", "skipped"}:
-            events_by_study.setdefault(study_id, []).append(row)
+            events_by_study.setdefault(study_id, []).append(_registered_result(database, row))
     records = []
     for study_id, definition_text, digest, registered_at in studies:
         definition = json.loads(definition_text)
@@ -221,7 +249,8 @@ def _load_sqlite(database: Path | None) -> list[dict]:
                 "hypothesis": str(definition.get("hypothesis", "")),
                 "definition": definition,
                 "attempts": [
-                    {**attempt, "_source": source} for attempt in events_by_study.get(study_id, [])
+                    {**attempt, "_source": attempt.get("_source", source)}
+                    for attempt in events_by_study.get(study_id, [])
                 ],
                 "source": source,
             }
@@ -258,6 +287,21 @@ def _load_study_files(studies_root: Path | None, study_paths: Sequence[Path] = (
                     **result,
                     "_json_pointer": f"/results/{index}",
                     "_attempt_dir": path.parent / "attempts" / str(result.get("attempt_id", "")),
+                    "_source": source,
+                }
+            )
+        for index, event in enumerate(document.get("attempts", [])):
+            if not isinstance(event, dict) or event.get("status") not in {
+                "failed",
+                "interrupted",
+                "skipped",
+            }:
+                continue
+            attempts.append(
+                {
+                    **event,
+                    "_json_pointer": f"/attempts/{index}/payload",
+                    "_json_status_pointer": f"/attempts/{index}/status",
                     "_source": source,
                 }
             )
@@ -373,7 +417,11 @@ def _citation_for_attempt(
 ) -> dict:
     source = attempt.get("_source", record["source"])
     if source["type"] == "json":
-        target = attempt["_json_pointer"] + ("/status" if pointer == "$status" else pointer)
+        target = (
+            attempt.get("_json_status_pointer", attempt["_json_pointer"] + "/status")
+            if pointer == "$status"
+            else attempt["_json_pointer"] + pointer
+        )
         return _make_json_citation(
             citation_id,
             source["path"],
@@ -525,11 +573,21 @@ def research_history(
                 continue
             seen_attempts.add(dedupe)
             if status == "completed":
-                metrics = payload.get("metrics") if isinstance(payload.get("metrics"), dict) else {}
+                has_metrics = isinstance(payload.get("metrics"), dict) and not attempt.get(
+                    "_result_error"
+                )
+                metrics = payload["metrics"] if has_metrics else {}
                 citation_id = f"citation-{len(citations) + 1}"
                 citations.append(
                     _citation_for_attempt(
-                        record, attempt, citation_id, "/metrics", metrics, "completed metrics"
+                        record,
+                        attempt,
+                        citation_id,
+                        "/metrics" if has_metrics else "$status",
+                        metrics if has_metrics else status,
+                        "completed metrics"
+                        if has_metrics
+                        else "completed status; metrics unavailable",
                     )
                 )
                 attempt_dir = attempt.get("_attempt_dir") or _find_attempt_dir(
@@ -540,6 +598,7 @@ def research_history(
                         "attempt_id": attempt_id,
                         "candidate": payload.get("candidate"),
                         "metrics": metrics,
+                        "result_error": attempt.get("_result_error"),
                         "artifact_validation": validate_artifacts(
                             payload.get("artifacts"), attempt_dir
                         ),

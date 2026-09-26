@@ -14,7 +14,7 @@ dependencies = [
     "langchain-core>=0.3",
     "pandas>=2.0,<3.0",
     "pyyaml>=6.0",
-    "quant-factors @ git+https://github.com/PureSaber/quant-factors.git@e5da58606081d9f733cdb0fec96ca408003b4e41",
+    "quant-factors @ git+https://github.com/PureSaber/quant-factors.git@313243588a0ea090a399244eccbc8e1833119b3a",
     "tomli>=2.0; python_version < '3.11'",
     "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@8f47d2ba69ee532d7559957e4b2fb36c2b13a3d8",
     "quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git@v0.3.1",
