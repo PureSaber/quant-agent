@@ -11,7 +11,8 @@ except ModuleNotFoundError:
 import quant_agent
 
 ROOT = Path(__file__).resolve().parents[1]
-LAB_COMMIT = "27489d270e132adbec1bced93eb2ae84ad5e1a9b"
+LAB_COMMIT = "bace19c01cf3ecd77fbbb4a5bc75f2ce3498902f"
+FACTORS_COMMIT = "ba021bbe11696f0bd5cda0ee047515793f11855d"
 WORKSPACE_COMMIT = "537388a4d9548b612fa1e4b306c482c04b45c433"
 
 
@@ -27,7 +28,8 @@ def test_release_and_workspace_governance_are_declared() -> None:
         "lock-files": ["requirements.lock"],
     }
     dependencies = "\n".join(project["dependencies"])
-    assert "quant-lab.git@v0.3.1" in dependencies
+    assert f"quant-lab.git@{LAB_COMMIT}" in dependencies
+    assert f"quant-factors.git@{FACTORS_COMMIT}" in dependencies
     assert "quant-workspace.git@v0.3.1" in dependencies
     assert not re.search(r"git\+[^\s]+@(main|master|latest)(?:\b|$)", dependencies)
 
@@ -35,10 +37,11 @@ def test_release_and_workspace_governance_are_declared() -> None:
 def test_lock_covers_internal_and_cross_python_dependencies() -> None:
     lock = (ROOT / "requirements.lock").read_text(encoding="utf-8")
 
-    assert "quant-lab.git@v0.3.1" in lock
+    assert f"quant-lab.git@{LAB_COMMIT}" in lock
+    assert f"quant-factors.git@{FACTORS_COMMIT}" in lock
     assert "quant-workspace.git@v0.3.1" in lock
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert LAB_COMMIT in readme and WORKSPACE_COMMIT in readme
+    assert all(commit in readme for commit in (LAB_COMMIT, FACTORS_COMMIT, WORKSPACE_COMMIT))
     assert re.search(r'tomli==[^\s]+ ; python_version < "3\.11"', lock)
     assert "setuptools==" in lock
     assert not re.search(r"git\+[^\s]+@(main|master|latest)(?:\b|$)", lock)

@@ -57,10 +57,11 @@ load → rules → explain → skeptic → write_report
 
 This repository declares the `orchestration` layer and consumes `standard/v2@2.0.0` through
 `[tool.quant-workspace]`. The declared external lock is `requirements.lock`; a release audit records
-its SHA-256. Internal runtime dependencies use published annotated tags in both project metadata
-and the lock; their verified peeled commits are:
+its SHA-256. Internal runtime dependencies use immutable commit pins or published annotated tags
+in both project metadata and the lock; their verified commits are:
 
-- `quant-lab v0.3.1` at commit `27489d270e132adbec1bced93eb2ae84ad5e1a9b`;
+- `quant-lab` research contract at commit `bace19c01cf3ecd77fbbb4a5bc75f2ce3498902f`;
+- `quant-factors` research registry at commit `ba021bbe11696f0bd5cda0ee047515793f11855d`;
 - `quant-workspace v0.3.1` at commit `537388a4d9548b612fa1e4b306c482c04b45c433`.
 
 For a run containing `standard/v2`, the agent first calls the version-independent `quant-lab`
@@ -100,7 +101,7 @@ constraints, and lock as one review unit; never hand-edit an isolated transitive
 Migration is producer-owned: publish a new immutable `standard/v2` directory beside v1, including
 its complete manifest, manifest checksum, config, metrics, Parquet artifacts, and lineage. Do not
 modify v1 and do not copy unvalidated private CSVs into the v2 review path. Validate the new run with
-`quant-lab v0.3.1` before invoking `quant-review`; a failed migration remains a failed v2 run and
+the pinned `quant-lab` validator before invoking `quant-review`; a failed migration remains a failed v2 run and
 must be repaired by publishing a new run rather than by forcing v1 fallback.
 
 Rollback this governance change with a Git revert that restores `pyproject.toml`, the constraints,
