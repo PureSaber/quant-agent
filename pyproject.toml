@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=84.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,10 +10,10 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10,<3.13"
 dependencies = [
-    "langgraph>=0.4",
-    "langchain-core>=0.3",
-    "pandas>=2.0,<3.0",
-    "pyyaml>=6.0",
+    "langgraph>=1.2.12",
+    "langchain-core>=1.6.4",
+    "pandas>=2.3.3,<3.0",
+    "pyyaml>=6.0.3",
     "quant-factors @ git+https://github.com/PureSaber/quant-factors.git@249fb621d4d880942cb5dfbbcd812c0d45bf45a2",
     "tomli>=2.0; python_version < '3.11'",
     "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@a923a791315312a4d9caecf3b9776f08d53bb736",
@@ -21,9 +21,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-llm = ["langchain-openai>=0.3"]
+llm = ["langchain-openai>=1.6.5"]
 workspace = []
-dev = ["coverage>=7.6", "pytest>=7.4", "ruff>=0.9.0"]
+dev = ["coverage>=7.16.1", "pytest>=9.1.1", "ruff>=0.16.8"]
 
 [project.scripts]
 quant-review = "quant_agent.cli:main"
