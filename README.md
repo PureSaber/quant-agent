@@ -1,5 +1,7 @@
 # quant-agent
 
+研究可信度升级：接口、使用示例、验收及限制见 [11–20 使用说明](docs/OBJECTIVE_REVIEW.md)。
+
 LangGraph review layer for the PureSaber quant stack. It reads completed run outputs from sibling repos (starting with `a-share-multifactor`), applies deterministic QA rules, optionally calls an LLM for interpretation, and writes experiment notes plus a `review_manifest.json` back into the run directory.
 
 ## What it does (and does not do)
@@ -73,8 +75,8 @@ This repository declares the `orchestration` layer and consumes `standard/v2@2.0
 its SHA-256. Internal runtime dependencies use immutable commit pins or published annotated tags
 in both project metadata and the lock; their verified commits are:
 
-- `quant-lab` expression-aware research contract at commit `6ad789442a5ff7b5e3f68d241ecf0ee327f7e82f`;
-- `quant-factors` restricted research expressions at commit `482e184b4b9b66b47c7528b6cc01cf3077ce78d3`;
+- `quant-lab` research integrity and objective contract at commit `a923a791315312a4d9caecf3b9776f08d53bb736`;
+- `quant-factors` restricted research expressions at commit `249fb621d4d880942cb5dfbbcd812c0d45bf45a2`;
 - `quant-workspace v0.3.1` at commit `537388a4d9548b612fa1e4b306c482c04b45c433`.
 
 For a run containing `standard/v2`, the agent first calls the version-independent `quant-lab`
