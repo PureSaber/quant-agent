@@ -2,6 +2,8 @@
 
 研究可信度升级：接口、使用示例、验收及限制见 [11–20 使用说明](docs/OBJECTIVE_REVIEW.md)。
 
+Studio的项目证据解释接口见[工作台研究助手](docs/WORKBENCH_ASSISTANT.md)，支持离线整理及显式授权的模型建议。
+
 LangGraph review layer for the PureSaber quant stack. It reads completed run outputs from sibling repos (starting with `a-share-multifactor`), applies deterministic QA rules, optionally calls an LLM for interpretation, and writes experiment notes plus a `review_manifest.json` back into the run directory.
 
 ## What it does (and does not do)
