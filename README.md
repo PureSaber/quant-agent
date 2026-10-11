@@ -59,6 +59,23 @@ re-verifiable citations, completed results, failures, artifact checks, a minimal
 and explicit missing-data notes. It does not select a winner, modify governed recipe fields or run
 an experiment. See [the research assistant guide](docs/research-assistant.md).
 
+## 工作台Notebook修改建议
+
+Studio可先展示历史证据和清除旧输出的Notebook源码，再显式调用：
+
+```bash
+python -m quant_agent.workbench_assistant --context context.json --notebook source.ipynb --output answer.json
+```
+
+默认离线返回证据整理与空`patches`。在线生成需要显式`--model`、
+`QUANT_AGENT_LLM_OK=1`和已有供应商凭据；发送内容包括预览的代码及历史摘要。
+每个修改建议绑定原单元格序号、SHA-256和证据编号。拒绝未知证据、
+错误源码哈希、重复单元格及超限响应，Studio展示逐单元格diff供审阅。
+助手不会执行代码或改写草稿，建议仍需研究者验证。输入源码上限60KB，
+合并证据上限120KB；输出文件必须是新文件。
+
+测试使用离线进程与可控模型响应，不代表在线供应商已验收。
+
 ## Graph
 
 ```
