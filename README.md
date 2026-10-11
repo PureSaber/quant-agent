@@ -1,5 +1,9 @@
 # quant-agent
 
+金融研究助手的离线质量评测见 [assistant assessment](docs/assistant-assessment.md)。
+`quant-assistant-eval` 提供隐藏答案的证据导出、确定性基线、独立标注评分及可读报告；
+单独记录评分器回归与基线表现，不宣称测量了在线模型质量。
+
 项目级完整尝试清单与显式复核见 [研究证据联邦](docs/RESEARCH_FEDERATION.md)。
 Studio 可通过独立进程调用 `quant-research-workflow federate`；Lab 保持只读。
 
