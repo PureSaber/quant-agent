@@ -1,5 +1,6 @@
 import copy
 import json
+import sqlite3
 import subprocess
 import sys
 from pathlib import Path
@@ -291,3 +292,33 @@ def test_completed_lab_artifact_is_rechecked_before_review(manifest, tmp_path):
     with pytest.raises(ValueError, match="sources changed"):
         record_review(tmp_path / "review", view, request(view, attempt_ids=[row["id"]]))
     assert file_hash(database) == before
+
+
+def test_corrupt_linked_lab_preserves_historical_review_and_rejects_write(manifest, tmp_path):
+    database = tmp_path / "lab.sqlite"
+    registry = TrialRegistry(database)
+    registry.register(
+        "study",
+        {
+            "hypothesis": "fixture",
+            "parameters": [{"x": 1}],
+            "code_identity": "abc",
+            "selection_rule": "prespecified",
+        },
+    )
+    manifest["lab_bindings"] = [{"database": str(database), "study_ids": ["study"]}]
+    view = federate(manifest)
+    directory = tmp_path / "review"
+    state = record_review(directory, view, request(view))
+    database.write_bytes(b"not a SQLite database")
+    current = federate(manifest)
+    assert "Lab binding unavailable" in current["missing"][0]
+    history = review_state(directory, current)
+    review = history["reviews"][0]
+    assert history["head_sha256"] == state["head_sha256"]
+    assert review["reason"] == request(view)["reason"]
+    assert review["needs_review"] and review["integrity"] == "source_changed"
+    assert "database" in review["reason_for_review"]
+    with pytest.raises(sqlite3.Error):
+        record_review(directory, view, request(view, state, to_state="review"))
+    assert review_state(directory, current)["head_sha256"] == state["head_sha256"]

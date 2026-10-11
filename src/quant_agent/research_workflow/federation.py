@@ -148,7 +148,7 @@ def review_state(directory, snapshot):
             row = {**review, "needs_review": stale, "integrity": "verified"}
             try:
                 _fresh(original)
-            except (OSError, ValueError, KeyError, TypeError) as exc:
+            except (OSError, ValueError, KeyError, TypeError, sqlite3.Error) as exc:
                 row.update(
                     needs_review=True, integrity="source_changed", reason_for_review=str(exc)
                 )
