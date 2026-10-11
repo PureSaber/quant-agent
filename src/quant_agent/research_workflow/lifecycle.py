@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing, contextmanager
 from pathlib import Path
 
 from quant_agent.research_history import verify_citations
@@ -30,7 +31,7 @@ class ResearchLifecycle:
             # Claim only a new independent DB, never initialize a Lab/account DB.
             with self.path.open("xb"):
                 pass
-            with sqlite3.connect(self.path) as db:
+            with closing(sqlite3.connect(self.path)) as db, db:
                 db.execute("CREATE TABLE workflow_meta (schema TEXT NOT NULL)")
                 db.execute("INSERT INTO workflow_meta VALUES ('quant.research-lifecycle/v1')")
                 db.execute(
@@ -43,8 +44,10 @@ class ResearchLifecycle:
             ).fetchall() != [("quant.research-lifecycle/v1",)]:
                 raise ValueError("not an independent research lifecycle database")
 
+    @contextmanager
     def _read(self):
-        return sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True)
+        with closing(sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True)) as db:
+            yield db
 
     def _state(self, db, strategy):
         identifier(strategy)
@@ -100,7 +103,7 @@ class ResearchLifecycle:
         when = timestamp(recorded_at)
         if not isinstance(evidence, list) or not evidence or verify_citations(evidence)["invalid"]:
             raise ValueError("at least one currently verified evidence citation required")
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db, db:
             db.execute("BEGIN IMMEDIATE")
             state = self._state(db, strategy)
             if state["head_sha256"] != expected_head:
