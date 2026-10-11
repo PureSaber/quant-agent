@@ -1,5 +1,8 @@
 # quant-agent
 
+独立研究业务层：见 [机器学习、稳健性、研究生命周期与证据关系](docs/RESEARCH_WORKFLOW.md)。
+入口 `quant-research-workflow`；只读消费 Lab/Factors，研究状态不授予真实执行权限。
+
 研究可信度升级：接口、使用示例、验收及限制见 [11–20 使用说明](docs/OBJECTIVE_REVIEW.md)。
 
 Studio的项目证据解释接口见[工作台研究助手](docs/WORKBENCH_ASSISTANT.md)，支持离线整理及显式授权的模型建议。
