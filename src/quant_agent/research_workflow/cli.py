@@ -2,13 +2,13 @@
 
 import argparse
 import json
+import sqlite3
+import sys
 from pathlib import Path
 
 from .contracts import read_json, verify_archive, write_json
 from .evidence import search_evidence_graph
 from .lifecycle import ResearchLifecycle
-from .ml import run_study
-from .robustness import load_robustness
 
 
 def main(argv=None):
@@ -36,15 +36,46 @@ def main(argv=None):
     graph.add_argument("--study-path", type=Path, action="append", default=[])
     graph.add_argument("--limit", type=int, default=50)
     graph.add_argument("--output", type=Path, required=True)
+    federation = commands.add_parser("federate")
+    federation.add_argument("--manifest", required=True, help="JSON path, or - for stdin")
+    federation.add_argument("--review-directory", type=Path)
+    federation.add_argument("--review", help="Review JSON path, or - for manifest.review_request")
+    federation.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
     try:
         if args.command == "ml":
+            from .ml import run_study
+
             result = run_study(args.plan, args.dataset, args.output_root)
         elif args.command == "verify":
             result = verify_archive(args.archive)
         elif args.command == "robustness":
+            from .robustness import load_robustness
+
             result = load_robustness(args.bundle)
             write_json(args.output, result)
+        elif args.command == "federate":
+            from .federation import federate, record_review, review_state
+
+            manifest = json.load(sys.stdin) if args.manifest == "-" else read_json(args.manifest)
+            result = federate(manifest)
+            if args.review and not args.review_directory:
+                raise ValueError("review requires --review-directory")
+            if args.review_directory:
+                state = (
+                    record_review(
+                        args.review_directory,
+                        result,
+                        manifest["review_request"]
+                        if args.review == "-"
+                        else read_json(args.review),
+                    )
+                    if args.review
+                    else review_state(args.review_directory, result)
+                )
+                result = {**result, "lifecycle": state}
+            if args.output:
+                write_json(args.output, result)
         elif args.command == "lifecycle":
             service = ResearchLifecycle(args.database, create=args.action == "init")
             if args.action == "transition":
@@ -65,7 +96,7 @@ def main(argv=None):
             write_json(args.output, result)
         print(json.dumps(result, indent=2, allow_nan=False))
         return 2 if result.get("status") in {"failed", "incomplete_family"} else 0
-    except (OSError, ValueError, KeyError, TypeError) as exc:
+    except (OSError, ValueError, KeyError, TypeError, sqlite3.Error) as exc:
         print(json.dumps({"status": "error", "error_type": type(exc).__name__, "reason": str(exc)}))
         return 2
 

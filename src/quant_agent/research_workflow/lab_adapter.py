@@ -8,16 +8,31 @@ from quant_lab.family_evidence import collect_family
 from quant_lab.trials import TrialRegistry, canonical
 
 
+class _ReadOnlyConnection(sqlite3.Connection):
+    def __exit__(self, *args):
+        try:
+            return super().__exit__(*args)
+        finally:
+            self.close()
+
+
 class ReadOnlyTrialRegistry(TrialRegistry):
     def __init__(self, path):
         self.path = Path(path).resolve()
+        self.read_only = True
         if not self.path.is_file():
             raise FileNotFoundError(self.path)
 
     def connect(self):
-        db = sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True, timeout=30)
+        db = sqlite3.connect(
+            self.path.as_uri() + "?mode=ro", uri=True, timeout=30, factory=_ReadOnlyConnection
+        )
         db.execute("PRAGMA query_only=ON")
         return db
+
+    def _require_writable(self):
+        # Preserve SQLite-level write rejection on both old and new Lab versions.
+        raise sqlite3.OperationalError("readonly research registry")
 
     @staticmethod
     def _verify(result):

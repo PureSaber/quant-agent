@@ -1,5 +1,8 @@
 # quant-agent
 
+项目级完整尝试清单与显式复核见 [研究证据联邦](docs/RESEARCH_FEDERATION.md)。
+Studio 可通过独立进程调用 `quant-research-workflow federate`；Lab 保持只读。
+
 独立研究业务层：见 [机器学习、稳健性、研究生命周期与证据关系](docs/RESEARCH_WORKFLOW.md)。
 入口 `quant-research-workflow`；只读消费 Lab/Factors，研究状态不授予真实执行权限。
 
