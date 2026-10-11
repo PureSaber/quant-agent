@@ -30,6 +30,7 @@ quant-review = "quant_agent.cli:main"
 quant-propose = "quant_agent.research_assistant:main"
 quant-research-history = "quant_agent.research_history:main"
 quant-objective-review = "quant_agent.objective_review:main"
+quant-research-workflow = "quant_agent.research_workflow.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
