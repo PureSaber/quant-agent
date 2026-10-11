@@ -134,11 +134,22 @@ def main(argv=None):
     parser.add_argument("--context", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--model")
+    parser.add_argument("--notebook", type=Path)
     args = parser.parse_args(argv)
     try:
         if args.context.stat().st_size > 60000:
             raise ValueError("Context exceeds 60KB")
-        report = advise(json.loads(args.context.read_text(encoding="utf-8")), model=args.model)
+        context = json.loads(args.context.read_text(encoding="utf-8"))
+        if args.notebook:
+            from quant_agent.notebook_advisor import propose_notebook
+
+            if args.notebook.stat().st_size > 60_000:
+                raise ValueError("Notebook source exceeds 60KB")
+            report = propose_notebook(
+                context, json.loads(args.notebook.read_text("utf-8")), model=args.model
+            )
+        else:
+            report = advise(context, model=args.model)
         with args.output.open("x", encoding="utf-8") as stream:
             json.dump(report, stream, ensure_ascii=False, indent=2)
     except Exception as exc:  # noqa: BLE001 -- CLI boundary redacts provider details
