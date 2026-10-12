@@ -1,0 +1,60 @@
+{
+  "schema": "quant.assistant-controls/v1",
+  "controls": [
+    {
+      "id": "good",
+      "file": "good.json",
+      "expected_accept": true
+    },
+    {
+      "id": "wrong-net-return",
+      "file": "wrong-net-return.json",
+      "expected_accept": false
+    },
+    {
+      "id": "quote-correct-wrong-conclusion",
+      "file": "quote-correct-wrong-conclusion.json",
+      "expected_accept": false
+    },
+    {
+      "id": "omitted-failures",
+      "file": "omitted-failures.json",
+      "expected_accept": false
+    },
+    {
+      "id": "conflict-denial",
+      "file": "conflict-denial.json",
+      "expected_accept": false
+    },
+    {
+      "id": "unsupported-profit-claim",
+      "file": "unsupported-profit-claim.json",
+      "expected_accept": false
+    },
+    {
+      "id": "wrong-citation",
+      "file": "wrong-citation.json",
+      "expected_accept": false
+    },
+    {
+      "id": "missing-abstention",
+      "file": "missing-abstention.json",
+      "expected_accept": false
+    },
+    {
+      "id": "lookahead-observation-date",
+      "file": "lookahead-observation-date.json",
+      "expected_accept": false
+    },
+    {
+      "id": "naive-cashflow-return",
+      "file": "naive-cashflow-return.json",
+      "expected_accept": false
+    },
+    {
+      "id": "all-caveats-gaming",
+      "file": "all-caveats-gaming.json",
+      "expected_accept": false
+    }
+  ]
+}

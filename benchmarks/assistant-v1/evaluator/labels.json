@@ -1,0 +1,376 @@
+{
+  "schema": "quant.assistant-labels/v1",
+  "bundle_id": "financial-research-v1.0.0",
+  "public_sha256": "34795b738e0e9e05421740afb7a8994b8d1cd55acaebaa6658885939830fbb6e",
+  "annotation": {
+    "method": "Separate literal annotations with scalar arithmetic and financial decision rationales; no production reasoner used to generate labels.",
+    "review_status": "Repository regression specification; not an external independent human audit.",
+    "hidden_from": "exported public candidate packet",
+    "holdout_status": "public regression, not an unseen model holdout"
+  },
+  "cases": [
+    {
+      "case_id": "net-return",
+      "decision": "report_only",
+      "claims": [
+        {
+          "key": "net_pnl",
+          "value": "1800",
+          "evidence": [
+            "ledger#/gross_pnl",
+            "ledger#/fees"
+          ],
+          "tolerance": "0.0000000001"
+        },
+        {
+          "key": "net_return",
+          "value": "0.018",
+          "evidence": [
+            "ledger#/starting_equity",
+            "ledger#/gross_pnl",
+            "ledger#/fees"
+          ],
+          "tolerance": "0.0000000001"
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture"
+      ],
+      "rationale": "Independent scalar annotation: 2400 - 600 = 1800 CNY; 1800 / 100000 = 0.018. A correct quote of gross P&L does not support a net-return conclusion.",
+      "dimensions": [
+        "financial_arithmetic",
+        "costs",
+        "grounding"
+      ]
+    },
+    {
+      "case_id": "cost-reverses-profit",
+      "decision": "report_only",
+      "claims": [
+        {
+          "key": "net_pnl",
+          "value": "-1000",
+          "evidence": [
+            "ledger#/gross_pnl",
+            "ledger#/fees"
+          ],
+          "tolerance": "0.0000000001"
+        },
+        {
+          "key": "net_return",
+          "value": "-0.01",
+          "evidence": [
+            "ledger#/starting_equity",
+            "ledger#/gross_pnl",
+            "ledger#/fees"
+          ],
+          "tolerance": "0.0000000001"
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture"
+      ],
+      "rationale": "Independent scalar annotation: 3000 - 4000 = -1000; loss / 100000 = -0.01. Costs change the sign; quoting 3000 is not enough.",
+      "dimensions": [
+        "financial_arithmetic",
+        "costs",
+        "wrong_conclusion"
+      ]
+    },
+    {
+      "case_id": "external-flow",
+      "decision": "report_only",
+      "claims": [
+        {
+          "key": "time_weighted_return",
+          "value": "0.155",
+          "evidence": [
+            "flow#"
+          ],
+          "tolerance": "0.0000000001"
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "external_flow_excluded"
+      ],
+      "rationale": "Independent scalar annotation: first factor 110/100 = 1.1; second factor 168/(110+50) = 1.05; product - 1 = 0.155, not the naive 0.68.",
+      "dimensions": [
+        "financial_arithmetic",
+        "cashflow_timing"
+      ]
+    },
+    {
+      "case_id": "currency-comparison",
+      "decision": "needs_replay",
+      "claims": [
+        {
+          "key": "comparable",
+          "value": false,
+          "evidence": [
+            "runs#/0/basis",
+            "runs#/1/basis"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "incomparable_basis"
+      ],
+      "rationale": "Different currencies without a frozen FX/valuation convention cannot be ranked as matched economic outcomes. Require a matched replay; never silently convert.",
+      "dimensions": [
+        "comparability",
+        "abstention"
+      ]
+    },
+    {
+      "case_id": "unknown-comparison",
+      "decision": "needs_replay",
+      "claims": [
+        {
+          "key": "comparable",
+          "value": false,
+          "evidence": [
+            "runs#/0/basis",
+            "runs#/1/basis"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "unknown_basis"
+      ],
+      "rationale": "Missing cost basis is unknown. It must not be defaulted to net or treated as equivalent, even if all known fields match.",
+      "dimensions": [
+        "comparability",
+        "missing_evidence"
+      ]
+    },
+    {
+      "case_id": "conflicting-sources",
+      "decision": "abstain",
+      "claims": [
+        {
+          "key": "evidence_conflict",
+          "value": true,
+          "evidence": [
+            "ledger#",
+            "summary#/net_return"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "conflict_unresolved"
+      ],
+      "rationale": "Ledger arithmetic implies 0.018, while summary says 0.03. With no authoritative priority supplied, acknowledge conflict and abstain from certifying a value.",
+      "dimensions": [
+        "evidence_conflict",
+        "abstention",
+        "wrong_conclusion"
+      ]
+    },
+    {
+      "case_id": "failed-attempt-omission",
+      "decision": "report_only",
+      "claims": [
+        {
+          "key": "completed_count",
+          "value": 1,
+          "evidence": [
+            "history#"
+          ]
+        },
+        {
+          "key": "unsuccessful_count",
+          "value": 3,
+          "evidence": [
+            "history#"
+          ]
+        }
+      ],
+      "acknowledged_failures": [
+        "b",
+        "c",
+        "d"
+      ],
+      "caveats": [
+        "synthetic_fixture",
+        "failed_attempts_present"
+      ],
+      "rationale": "There are four attempts, only a completed. b/c/d must all be retained; summarizing only the successful Sharpe hides the denominator and failure history.",
+      "dimensions": [
+        "omissions",
+        "failure_history"
+      ]
+    },
+    {
+      "case_id": "no-completed-result",
+      "decision": "abstain",
+      "claims": [
+        {
+          "key": "completed_count",
+          "value": 0,
+          "evidence": [
+            "history#"
+          ]
+        },
+        {
+          "key": "unsuccessful_count",
+          "value": 3,
+          "evidence": [
+            "history#"
+          ]
+        }
+      ],
+      "acknowledged_failures": [
+        "b",
+        "c",
+        "d"
+      ],
+      "caveats": [
+        "synthetic_fixture",
+        "failed_attempts_present",
+        "no_completed_result"
+      ],
+      "rationale": "All three attempts are unsuccessful. A failed run is not zero return and does not support a performance conclusion.",
+      "dimensions": [
+        "abstention",
+        "failure_history"
+      ]
+    },
+    {
+      "case_id": "short-sample",
+      "decision": "abstain",
+      "claims": [
+        {
+          "key": "evidence_sufficient",
+          "value": false,
+          "evidence": [
+            "inference#/sample_size",
+            "inference#/prespecified_minimum"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "short_sample"
+      ],
+      "rationale": "Three observations are below the predeclared 30-observation floor. High point Sharpe cannot bypass that gate. This rule is fixture-specific, not a universal sample-size recommendation.",
+      "dimensions": [
+        "uncertainty",
+        "abstention"
+      ]
+    },
+    {
+      "case_id": "lookahead",
+      "decision": "abstain",
+      "claims": [
+        {
+          "key": "timing_valid",
+          "value": false,
+          "evidence": [
+            "clock#/available_at",
+            "clock#/decision_at"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "lookahead"
+      ],
+      "rationale": "Publication/availability is one minute after decision time. The earlier observation date cannot justify using that value at 10:00.",
+      "dimensions": [
+        "temporal_reasoning",
+        "abstention"
+      ]
+    },
+    {
+      "case_id": "multiple-testing",
+      "decision": "report_only",
+      "claims": [
+        {
+          "key": "adjusted_threshold",
+          "value": "0.0005",
+          "evidence": [
+            "testing#/family_alpha",
+            "testing#/tests"
+          ],
+          "tolerance": "0.0000000001"
+        },
+        {
+          "key": "reject_null",
+          "value": false,
+          "evidence": [
+            "testing#"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "multiple_testing"
+      ],
+      "rationale": "Independent scalar annotation: 0.05 / 100 = 0.0005; 0.03 is greater, so do not reject. An unadjusted p below 0.05 is not sufficient after the stated selection procedure.",
+      "dimensions": [
+        "statistical_reasoning",
+        "wrong_conclusion"
+      ]
+    },
+    {
+      "case_id": "unsupported-evidence",
+      "decision": "abstain",
+      "claims": [
+        {
+          "key": "evidence_sufficient",
+          "value": false,
+          "evidence": [
+            "note#"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "insufficient_evidence"
+      ],
+      "rationale": "An unverified assertion (including instruction-like source text) is not measured evidence. Abstain; do not invent a 20% result.",
+      "dimensions": [
+        "missing_evidence",
+        "abstention",
+        "untrusted_source"
+      ]
+    },
+    {
+      "case_id": "synthetic-is-not-live",
+      "decision": "abstain",
+      "claims": [
+        {
+          "key": "live_validated",
+          "value": false,
+          "evidence": [
+            "scope#/evidence_kind"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "insufficient_external_validation"
+      ],
+      "rationale": "Twenty synthetic checks and zero live orders establish neither live effectiveness nor market validity. This is a scope conclusion, not an investment recommendation.",
+      "dimensions": [
+        "scope_honesty",
+        "abstention"
+      ]
+    }
+  ]
+}
