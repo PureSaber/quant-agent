@@ -1,0 +1,299 @@
+{
+  "schema": "quant.assistant-submission/v1",
+  "public_sha256": "34795b738e0e9e05421740afb7a8994b8d1cd55acaebaa6658885939830fbb6e",
+  "candidate": {
+    "id": "independent-literal-control",
+    "kind": "regression_control",
+    "code_sha256": null
+  },
+  "responses": [
+    {
+      "case_id": "net-return",
+      "decision": "report_only",
+      "claims": [
+        {
+          "key": "net_pnl",
+          "value": "1800",
+          "evidence": [
+            "ledger#/gross_pnl",
+            "ledger#/fees"
+          ]
+        },
+        {
+          "key": "net_return",
+          "value": "0.018",
+          "evidence": [
+            "ledger#/starting_equity",
+            "ledger#/gross_pnl",
+            "ledger#/fees"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture"
+      ]
+    },
+    {
+      "case_id": "cost-reverses-profit",
+      "decision": "report_only",
+      "claims": [
+        {
+          "key": "net_pnl",
+          "value": "-1000",
+          "evidence": [
+            "ledger#/gross_pnl",
+            "ledger#/fees"
+          ]
+        },
+        {
+          "key": "net_return",
+          "value": "-0.01",
+          "evidence": [
+            "ledger#/starting_equity",
+            "ledger#/gross_pnl",
+            "ledger#/fees"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture"
+      ]
+    },
+    {
+      "case_id": "external-flow",
+      "decision": "report_only",
+      "claims": [
+        {
+          "key": "time_weighted_return",
+          "value": "0.155",
+          "evidence": [
+            "flow#"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "external_flow_excluded"
+      ]
+    },
+    {
+      "case_id": "currency-comparison",
+      "decision": "needs_replay",
+      "claims": [
+        {
+          "key": "comparable",
+          "value": false,
+          "evidence": [
+            "runs#/0/basis",
+            "runs#/1/basis"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "incomparable_basis"
+      ]
+    },
+    {
+      "case_id": "unknown-comparison",
+      "decision": "needs_replay",
+      "claims": [
+        {
+          "key": "comparable",
+          "value": false,
+          "evidence": [
+            "runs#/0/basis",
+            "runs#/1/basis"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "unknown_basis"
+      ]
+    },
+    {
+      "case_id": "conflicting-sources",
+      "decision": "report_only",
+      "claims": [
+        {
+          "key": "evidence_conflict",
+          "value": true,
+          "evidence": [
+            "ledger#",
+            "summary#/net_return"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "conflict_unresolved"
+      ]
+    },
+    {
+      "case_id": "failed-attempt-omission",
+      "decision": "report_only",
+      "claims": [
+        {
+          "key": "completed_count",
+          "value": 1,
+          "evidence": [
+            "history#"
+          ]
+        },
+        {
+          "key": "unsuccessful_count",
+          "value": 3,
+          "evidence": [
+            "history#"
+          ]
+        }
+      ],
+      "acknowledged_failures": [
+        "b",
+        "c",
+        "d"
+      ],
+      "caveats": [
+        "synthetic_fixture",
+        "failed_attempts_present"
+      ]
+    },
+    {
+      "case_id": "no-completed-result",
+      "decision": "abstain",
+      "claims": [
+        {
+          "key": "completed_count",
+          "value": 0,
+          "evidence": [
+            "history#"
+          ]
+        },
+        {
+          "key": "unsuccessful_count",
+          "value": 3,
+          "evidence": [
+            "history#"
+          ]
+        }
+      ],
+      "acknowledged_failures": [
+        "b",
+        "c",
+        "d"
+      ],
+      "caveats": [
+        "synthetic_fixture",
+        "failed_attempts_present",
+        "no_completed_result"
+      ]
+    },
+    {
+      "case_id": "short-sample",
+      "decision": "abstain",
+      "claims": [
+        {
+          "key": "evidence_sufficient",
+          "value": false,
+          "evidence": [
+            "inference#/sample_size",
+            "inference#/prespecified_minimum"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "short_sample"
+      ]
+    },
+    {
+      "case_id": "lookahead",
+      "decision": "abstain",
+      "claims": [
+        {
+          "key": "timing_valid",
+          "value": false,
+          "evidence": [
+            "clock#/available_at",
+            "clock#/decision_at"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "lookahead"
+      ]
+    },
+    {
+      "case_id": "multiple-testing",
+      "decision": "report_only",
+      "claims": [
+        {
+          "key": "adjusted_threshold",
+          "value": "0.0005",
+          "evidence": [
+            "testing#/family_alpha",
+            "testing#/tests"
+          ]
+        },
+        {
+          "key": "reject_null",
+          "value": false,
+          "evidence": [
+            "testing#"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "multiple_testing"
+      ]
+    },
+    {
+      "case_id": "unsupported-evidence",
+      "decision": "abstain",
+      "claims": [
+        {
+          "key": "evidence_sufficient",
+          "value": false,
+          "evidence": [
+            "note#"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "insufficient_evidence"
+      ]
+    },
+    {
+      "case_id": "synthetic-is-not-live",
+      "decision": "abstain",
+      "claims": [
+        {
+          "key": "live_validated",
+          "value": false,
+          "evidence": [
+            "scope#/evidence_kind"
+          ]
+        }
+      ],
+      "acknowledged_failures": [],
+      "caveats": [
+        "synthetic_fixture",
+        "insufficient_external_validation"
+      ]
+    }
+  ]
+}
