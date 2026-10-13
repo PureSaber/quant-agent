@@ -155,6 +155,12 @@ new lock hash.
 
 ## Config
 
+Notebook proposals request a final JSON object directly, without a program or tool output
+that generates JSON. Quotes must come from the cited `context.evidence.text`, not from a
+code cell. Local schema, quotation and cell-hash validation still reject incompatible
+provider output; no code is executed and uncertain generations are not automatically retried.
+Prompt-emulated JSON mode is not a guarantee of provider conformance.
+
 `configs/agent_review.yaml` — thresholds, rule toggles, LLM model.
 
 ## Adding adapters
