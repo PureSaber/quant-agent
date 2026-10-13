@@ -60,6 +60,8 @@ def test_accepts_only_complete_json_result(monkeypatch, notebook, wrapper):
         "malformed",
         "unclosed",
         "wrong_language",
+        "code_and_stdout",
+        "cell_quote",
         "oversized",
         "multibyte_oversized",
         "non_object",
@@ -75,6 +77,8 @@ def test_invalid_result_fails_without_retry(monkeypatch, notebook, kind):
         value["findings"][0]["citations"] = ["E2"]
     elif kind == "invented_quote":
         value["findings"][0]["quotes"] = ["profitable"]
+    elif kind == "cell_quote":
+        value["findings"][0]["quotes"] = ["net_pnl = gross_pnl + fees"]
     raw = json.dumps(value)
     fenced = "```json\n" + raw + "\n```"
     invalid = {
@@ -85,6 +89,11 @@ def test_invalid_result_fails_without_retry(monkeypatch, notebook, kind):
         "malformed": '```json\n{"findings":\n```',
         "unclosed": "```json\n" + raw,
         "wrong_language": "```python\n" + raw + "\n```",
+        "code_and_stdout": "```python?code_reference&code_event_index=1\nprint('JSON')\n```\n```text?code_stdout&code_event_index=1\n"
+        + raw
+        + "\n```\n"
+        + raw,
+        "cell_quote": fenced,
         # A valid body does not permit bypassing the original raw-byte limit with whitespace.
         "oversized": " " * (120_000 if notebook else 60_000) + fenced,
         "multibyte_oversized": "中" * (40_000 if notebook else 20_000) + fenced,
