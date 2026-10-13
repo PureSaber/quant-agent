@@ -16,7 +16,7 @@ dependencies = [
     "pyyaml>=6.0.3",
     "quant-factors @ git+https://github.com/PureSaber/quant-factors.git@249fb621d4d880942cb5dfbbcd812c0d45bf45a2",
     "tomli>=2.0; python_version < '3.11'",
-    "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@a923a791315312a4d9caecf3b9776f08d53bb736",
+    "quant-lab @ git+https://github.com/PureSaber/quant-lab.git@126e0ce1ae3cad7121baf7c311365ca4a7ad42c8",
     "quant-workspace @ git+https://github.com/PureSaber/quant-workspace.git@v0.3.1",
 ]
 
