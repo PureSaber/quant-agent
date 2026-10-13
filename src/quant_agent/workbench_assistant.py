@@ -76,6 +76,22 @@ def validate_answer(answer, context):
     return answer
 
 
+def parse_model_json(response, *, max_bytes):
+    """Parse one complete object, optionally enclosed in one whole JSON code fence."""
+    if not isinstance(response, str) or len(response.encode("utf-8")) > max_bytes:
+        raise ValueError("Invalid or oversized model response")
+    text = response.strip()
+    if text.startswith("```"):
+        fence = re.fullmatch(r"```(?:json)?[ \t]*\r?\n(.*)\r?\n```", text, re.DOTALL)
+        if fence is None:
+            raise ValueError("Expected one complete JSON code fence")
+        text = fence.group(1)
+    answer = json.loads(text)
+    if not isinstance(answer, dict):
+        raise TypeError("Expected model response object")
+    return answer
+
+
 def advise(context, *, model=None, invoke=None):
     context = validate_context(context)
     if not model:
@@ -113,12 +129,13 @@ def advise(context, *, model=None, invoke=None):
 
         response = (
             ChatOpenAI(model=model, temperature=0, timeout=60, max_retries=0)
-            .invoke([SystemMessage(content=system), HumanMessage(content=request)])
+            .invoke(
+                [SystemMessage(content=system), HumanMessage(content=request)],
+                response_format={"type": "json_object"},
+            )
             .content
         )
-    if not isinstance(response, str) or len(response.encode()) > 60000:
-        raise ValueError("Invalid or oversized model response")
-    answer = validate_answer(json.loads(response), context)
+    answer = validate_answer(parse_model_json(response, max_bytes=60000), context)
     return {
         **answer,
         "mode": "model_assisted",

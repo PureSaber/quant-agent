@@ -108,9 +108,10 @@ def test_configured_provider_adapter_uses_explicit_model_and_validates_response(
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-        def invoke(self, messages):
+        def invoke(self, messages, **kwargs):
             assert len(messages) == 2
             assert json.loads(messages[1].content) == context()
+            assert kwargs == {"response_format": {"type": "json_object"}}
             return SimpleNamespace(content=json.dumps(answer))
 
     module.ChatOpenAI = FakeClient

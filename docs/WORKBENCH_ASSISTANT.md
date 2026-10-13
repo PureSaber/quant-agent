@@ -20,6 +20,10 @@ python -m quant_agent.workbench_assistant --context reviewed-context.json --outp
 问题最多4000字，证据最多30条、每条6000字，总JSON最多60KB；重复ID、未知字段、哈希不匹配均拒绝。
 
 模型仅返回`findings`与`next_steps`。每条finding包含`text`、`citations`、`quotes`。
+在线请求显式使用`response_format={"type":"json_object"}`，需要支持该Chat Completions参数的供应商或兼容网关。
+JSON模式仍可能只是网关的提示模拟；客户端继续独立校验，格式失败不自动重试。
+两类助手都接受完整JSON对象，或整个响应仅包含一个`json`/无语言标记代码围栏的JSON对象。
+围栏外的解释文字、多个围栏、额外JSON对象和截断JSON均拒绝；原始响应在去除空白或围栏前检查大小。
 引用必须来自输入，逐字片段必须存在于引用来源；无效JSON、超长内容或伪造引用使调用失败，不降级伪装成有效模型结果。
 CLI只创建新输出，不覆盖旧建议。失败返回1，日志保留错误类型，不输出可能包含授权头和证据内容的供应商异常全文。
 建议仍是待验证判断，引用存在不等于推理正确，也不证明交易策略有效。
