@@ -4,7 +4,12 @@ import hashlib
 import json
 import os
 
-from quant_agent.workbench_assistant import advise, validate_answer, validate_context
+from quant_agent.workbench_assistant import (
+    advise,
+    parse_model_json,
+    validate_answer,
+    validate_context,
+)
 
 
 def propose_notebook(context, notebook, *, model=None, invoke=None):
@@ -51,12 +56,13 @@ def propose_notebook(context, notebook, *, model=None, invoke=None):
 
         raw = (
             ChatOpenAI(model=model, temperature=0, timeout=60, max_retries=0)
-            .invoke([SystemMessage(content=system), HumanMessage(content=serialized)])
+            .invoke(
+                [SystemMessage(content=system), HumanMessage(content=serialized)],
+                response_format={"type": "json_object"},
+            )
             .content
         )
-    if not isinstance(raw, str) or len(raw.encode()) > 120_000:
-        raise ValueError("Invalid model response")
-    answer = json.loads(raw)
+    answer = parse_model_json(raw, max_bytes=120_000)
     if set(answer) != {"findings", "next_steps", "patches"}:
         raise ValueError("Unexpected proposal fields")
     validate_answer({k: answer[k] for k in ("findings", "next_steps")}, context)
