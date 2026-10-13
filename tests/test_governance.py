@@ -11,7 +11,7 @@ except ModuleNotFoundError:
 import quant_agent
 
 ROOT = Path(__file__).resolve().parents[1]
-LAB_COMMIT = "a923a791315312a4d9caecf3b9776f08d53bb736"
+LAB_COMMIT = "126e0ce1ae3cad7121baf7c311365ca4a7ad42c8"
 FACTORS_COMMIT = "249fb621d4d880942cb5dfbbcd812c0d45bf45a2"
 WORKSPACE_COMMIT = "537388a4d9548b612fa1e4b306c482c04b45c433"
 

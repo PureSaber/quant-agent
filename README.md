@@ -104,7 +104,7 @@ This repository declares the `orchestration` layer and consumes `standard/v2@2.0
 its SHA-256. Internal runtime dependencies use immutable commit pins or published annotated tags
 in both project metadata and the lock; their verified commits are:
 
-- `quant-lab` research integrity and objective contract at commit `a923a791315312a4d9caecf3b9776f08d53bb736`;
+- `quant-lab` research integrity and objective contract at commit `126e0ce1ae3cad7121baf7c311365ca4a7ad42c8`;
 - `quant-factors` restricted research expressions at commit `249fb621d4d880942cb5dfbbcd812c0d45bf45a2`;
 - `quant-workspace v0.3.1` at commit `537388a4d9548b612fa1e4b306c482c04b45c433`.
 
