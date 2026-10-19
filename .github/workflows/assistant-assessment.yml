@@ -27,7 +27,7 @@ jobs:
           quant-assistant-eval score --cases candidate-packet.json --labels benchmarks/assistant-v1/evaluator/labels.json --submission baseline-submission.json --output baseline-assessment
           quant-assistant-eval self-test --suite benchmarks/assistant-v1 --output regression-assessment
           python -m pytest -q tests/test_assistant_assessment.py --junitxml=assessment-tests.xml
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: offline-assessment-evidence
