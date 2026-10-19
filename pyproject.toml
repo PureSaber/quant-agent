@@ -10,8 +10,8 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10,<3.13"
 dependencies = [
-    "langgraph>=1.2.14",
-    "langchain-core>=1.6.9",
+    "langgraph>=1.2.15",
+    "langchain-core>=1.6.11",
     "pandas>=2.3.3,<3.0",
     "pyyaml>=6.0.3",
     "quant-factors @ git+https://github.com/PureSaber/quant-factors.git@1c798bc737bc92fa5eca85dd0663dc608104f721",
@@ -21,9 +21,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-llm = ["langchain-openai>=1.7.0"]
+llm = ["langchain-openai>=1.7.2"]
 workspace = []
-dev = ["coverage>=7.16.2", "pytest>=9.1.1", "ruff>=0.16.10"]
+dev = ["coverage>=7.16.2", "pytest>=9.1.1", "ruff>=0.17.1"]
 
 [project.scripts]
 quant-review = "quant_agent.cli:main"
