@@ -104,8 +104,8 @@ This repository declares the `orchestration` layer and consumes `standard/v2@2.0
 its SHA-256. Internal runtime dependencies use immutable commit pins or published annotated tags
 in both project metadata and the lock; their verified commits are:
 
-- `quant-lab` research integrity and objective contract at commit `126e0ce1ae3cad7121baf7c311365ca4a7ad42c8`;
-- `quant-factors` restricted research expressions at commit `249fb621d4d880942cb5dfbbcd812c0d45bf45a2`;
+- `quant-lab` research integrity and objective contract at commit `4c48f8a678c8d29a7dc46294c99f0e668cd6c52b`;
+- `quant-factors` restricted research expressions at commit `1c798bc737bc92fa5eca85dd0663dc608104f721`;
 - `quant-workspace v0.3.1` at commit `537388a4d9548b612fa1e4b306c482c04b45c433`.
 
 For a run containing `standard/v2`, the agent first calls the version-independent `quant-lab`
@@ -154,6 +154,12 @@ or recreate historical tags; if a dependency resolution must change, publish a n
 new lock hash.
 
 ## Config
+
+Notebook proposals request a final JSON object directly, without a program or tool output
+that generates JSON. Quotes must come from the cited `context.evidence.text`, not from a
+code cell. Local schema, quotation and cell-hash validation still reject incompatible
+provider output; no code is executed and uncertain generations are not automatically retried.
+Prompt-emulated JSON mode is not a guarantee of provider conformance.
 
 `configs/agent_review.yaml` — thresholds, rule toggles, LLM model.
 
