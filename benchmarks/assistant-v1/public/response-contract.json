@@ -4,6 +4,75 @@
   "canonical_hash": "SHA256 of UTF-8 JSON public packet with sorted keys, ensure_ascii=false, compact separators, finite numbers only",
   "candidate": {"id": "descriptive identifier", "kind": "external_submission", "code_sha256": "actual source digest if available, otherwise null"},
   "response_fields": ["case_id", "decision", "claims", "acknowledged_failures", "caveats"],
+  "response_shape": {
+    "case_id": "string copied from the supplied case",
+    "decision": "one decision_vocabulary key",
+    "claims": "array of claim_format objects, never a dictionary; include only claims requested by the question",
+    "acknowledged_failures": "array of unsuccessful attempt ID strings, empty when none apply",
+    "caveats": "array of applicable caveat_vocabulary strings; preserve the declared synthetic sample scope"
+  },
+  "output_format": "Return the single response object directly as JSON, without Python, code execution traces, Markdown or narrative.",
+  "type_notes": [
+    "The JSON Schema defines the preferred output form, not the scorer's complete acceptance rules. Emit counts as integer literals without decimal points or exponents; JSON Schema integer validation alone does not enforce that lexical restriction.",
+    "Emit monetary values, returns and thresholds as ordinary decimal strings. Boolean claims use true or false, never quoted strings."
+  ],
+  "evidence_reference_rules": [
+    "Each reference is source_id# followed by a JSON Pointer relative to that source's content value, not the evidence wrapper. Do not prefix /content.",
+    "source_id# denotes the complete content value. For a list, indices begin directly after #/, without /content.",
+    "Cite supporting source fields without unrelated references. Use the complete content when the reasoning depends on the whole record/list, including its timing or units; a collection-level conclusion can require the whole record even when field citations resolve. Comparisons of declared economic bases cite each complete basis object.",
+    "For a missing required field, cite the containing object that establishes the omission. Never invent a pointer to an absent field."
+  ],
+  "scoring_limitations": [
+    "Version 1 compares citation pointer sets exactly with frozen annotations. It does not judge semantic equivalence between a whole-record citation and sufficient field-level citations. A citation mismatch alone is not proof of an incorrect financial answer."
+  ],
+  "response_json_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["case_id", "decision", "claims", "acknowledged_failures", "caveats"],
+    "properties": {
+      "case_id": {"type": "string"},
+      "decision": {"type": "string", "enum": ["report_only", "needs_replay", "abstain"]},
+      "claims": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["key", "value", "evidence"],
+          "properties": {
+            "key": {"type": "string"},
+            "value": {},
+            "evidence": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[^#]+#(?:/.*)?$"}}
+          },
+          "oneOf": [
+            {"properties": {"key": {"enum": ["net_pnl", "net_return", "time_weighted_return", "adjusted_threshold"]}, "value": {"type": "string", "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$"}}},
+            {"properties": {"key": {"enum": ["completed_count", "unsuccessful_count"]}, "value": {"type": "integer", "minimum": 0}}},
+            {"properties": {"key": {"enum": ["comparable", "evidence_conflict", "evidence_sufficient", "timing_valid", "reject_null", "live_validated"]}, "value": {"type": "boolean"}}}
+          ]
+        }
+      },
+      "acknowledged_failures": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+      "caveats": {"type": "array", "uniqueItems": true, "items": {"type": "string", "enum": ["synthetic_fixture", "external_flow_excluded", "incomparable_basis", "unknown_basis", "conflict_unresolved", "failed_attempts_present", "no_completed_result", "short_sample", "lookahead", "multiple_testing", "insufficient_evidence", "insufficient_external_validation"]}}
+    }
+  },
+  "decision_rules": [
+    "For a requested economic comparison, different or incomplete declared bases require needs_replay; do not rank the runs.",
+    "Otherwise abstain when the requested conclusion is not supported: evidence is conflicted, missing, temporally invalid, below a stated sufficiency rule, or lacks the requested external validation. Describing why support is absent does not change abstain into report_only.",
+    "Use report_only for supported descriptive calculations or records. Report applicable requested claims even when the decision is abstain or needs_replay. Never add unrelated claims from the vocabulary."
+  ],
+  "caveat_meanings": {
+    "synthetic_fixture": "The supplied case is declared synthetic; preserve this scope on every such response.",
+    "external_flow_excluded": "An external cashflow is excluded from measured performance.",
+    "incomparable_basis": "Declared economic bases differ.",
+    "unknown_basis": "An economic comparison lacks a required basis field.",
+    "conflict_unresolved": "Sources conflict on the requested conclusion.",
+    "failed_attempts_present": "Relevant attempts include failed, skipped or interrupted outcomes.",
+    "no_completed_result": "There is no completed attempt to support a result.",
+    "short_sample": "The sample fails a stated minimum sample requirement.",
+    "lookahead": "Input became available after the decision time.",
+    "multiple_testing": "The requested inference accounts for multiple tests.",
+    "insufficient_evidence": "No usable evidence supports the claim; use a more specific caveat when it explains the insufficiency.",
+    "insufficient_external_validation": "The requested live or external validation is absent."
+  },
   "decision_vocabulary": {"report_only": "Supported descriptive answer; no execution authorization", "needs_replay": "Matched comparison requires explicit controlled replay", "abstain": "Evidence is insufficient, conflicted or invalid for the requested conclusion"},
   "claim_format": {"key": "one requested claim key", "value": "boolean, integer or decimal string as appropriate", "evidence": ["source_id#/JSON/pointer"]},
   "claims": {"net_pnl": "gross P&L minus all stated fees, major currency units", "net_return": "net P&L divided by starting equity, decimal fraction", "time_weighted_return": "chain subperiod returns across externally timed flows, decimal fraction", "comparable": "boolean same declared economic basis and complete required fields", "evidence_conflict": "boolean sources disagree on the requested metric", "completed_count": "integer completed attempts", "unsuccessful_count": "integer failed, interrupted or skipped attempts", "evidence_sufficient": "boolean requested evidence/sufficiency rule met", "timing_valid": "boolean input availability no later than decision", "adjusted_threshold": "decimal per-test threshold under specified adjustment", "reject_null": "boolean null rejected under specified adjustment", "live_validated": "boolean live external validation supplied"},
