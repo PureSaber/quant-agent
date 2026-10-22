@@ -40,6 +40,22 @@ does not dispatch on case IDs; renaming cases and changing fees tests that prope
 For an external candidate, provide only the packet, response schema instructions
 and the relevant question; keep evaluator files outside its accessible filesystem
 or tools. Export alone is an information packaging boundary, not an OS sandbox.
+The public contract explicitly describes each response field's shape: `claims`
+is an array of `{key, value, evidence}` objects, not a metric dictionary. Pass that
+contract with every request and request a single JSON response with no code or
+process traces. Do not execute provider-generated code or repair answers using
+evaluator labels. A syntactically valid JSON response still requires scoring.
+JSON pointers are relative to each source's `content`, so they do not include a
+`/content` wrapper. The contract also explains decisions and caveat meanings as
+general rules; these do not supply numeric answers or per-case expected responses.
+`response_json_schema` supplies the single-response JSON shape and claim value
+types (real JSON booleans, integer counts and decimal strings). It can be sent as
+`response_format.json_schema.schema`; provider schema enforcement still needs
+verification. Do not silently coerce a returned string such as `"false"` to a boolean.
+The schema describes preferred output, not all scorer acceptance rules: counts
+must use integer literals without decimal points or exponents. JSON Schema's
+`integer` type accepts `1.0`, while the frozen scorer requires a parsed Python
+`int`; validate that lexical/type boundary separately.
 
 Submission format:
 
@@ -77,8 +93,13 @@ earlier evaluations.
 
 `report.json` and `report.html` include dimension coverage, per-claim expected and
 actual values, errors, rationales and exact evidence/labels/submission/scorer
-identities. The HTML is escaped and has no external scripts. `self-test.json`
-separates evaluator control classification from the label-blind deterministic
+identities. The HTML is escaped and has no external scripts.
+
+Version 1 requires exact citation pointer sets from frozen annotations; it does
+not evaluate equivalence between complete-record and field-level references.
+Report those citation mismatches separately from incorrect claim values. Do not
+rewrite candidate answers or loosen labels after a live run to improve its score.
+`self-test.json` separates evaluator control classification from the label-blind deterministic
 baseline score. Ten negative controls exercise wrong net return, right quote with
 wrong decision, omitted failures, conflict denial, unsupported profit, wrong
 citation, missing abstention, lookahead, naive cashflow return and caveat gaming.
